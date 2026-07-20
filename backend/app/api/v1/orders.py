@@ -675,6 +675,46 @@ async def sync_order_tracking(
         await db.commit()
         await db.refresh(order)
 
+        # Dispatch Email & SMS Notifications via Background Tasks
+        enriched = _enrich_order(order)
+        to_email = enriched.customer_email
+        to_phone = enriched.customer_phone
+        customer_name = enriched.customer_name or "Valued Customer"
+        items_list = order_items_to_email_list(order.items)
+
+        if to_email:
+            if mapped_status == OrderStatus.shipped:
+                background_tasks.add_task(
+                    send_order_shipped_email,
+                    to_email, customer_name, enriched.order_number,
+                    carrier=enriched.carrier or "Delhivery",
+                    tracking_number=enriched.tracking_number or "",
+                    items=items_list,
+                )
+            elif mapped_status == OrderStatus.out_for_delivery:
+                background_tasks.add_task(
+                    send_out_for_delivery_email,
+                    to_email, customer_name, enriched.order_number,
+                    shipping_address=enriched.shipping_address,
+                )
+            elif mapped_status == OrderStatus.delivered:
+                background_tasks.add_task(
+                    send_order_delivered_email,
+                    to_email, customer_name, enriched.order_number, items_list
+                )
+
+        if to_phone:
+            if mapped_status == OrderStatus.shipped:
+                carrier = enriched.carrier or "Delhivery"
+                msg = f"Good news! Your order #{enriched.order_number} has been shipped via {carrier}. AWB: {enriched.tracking_number}. Track: https://kozmocart.com/track-order?order={enriched.order_number}&contact={to_phone}"
+                background_tasks.add_task(sendsms_status, to_phone, msg)
+            elif mapped_status == OrderStatus.out_for_delivery:
+                msg = f"Your order #{enriched.order_number} is out for delivery today! Our delivery executive will arrive soon."
+                background_tasks.add_task(sendsms_status, to_phone, msg)
+            elif mapped_status == OrderStatus.delivered:
+                msg = f"Delivered! Your order #{enriched.order_number} has arrived. Thank you for shopping with KOZMOCART!"
+                background_tasks.add_task(sendsms_status, to_phone, msg)
+
     return _enrich_order(order)
 
 

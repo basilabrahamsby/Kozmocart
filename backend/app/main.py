@@ -71,6 +71,56 @@ async def delhivery_status_polling_loop():
                             )
                             db.add(history)
                             db.add(order)
+
+                            # ✉️ Send Email & SMS Notification for Automated Status Change
+                            try:
+                                from app.services.email import (
+                                    send_order_shipped_email,
+                                    send_out_for_delivery_email,
+                                    send_order_delivered_email,
+                                    order_items_to_email_list
+                                )
+                                from app.services.sms import sendsms_status
+
+                                to_email = order.customer_email or (order.customer.email if getattr(order, 'customer', None) else None)
+                                to_phone = order.customer_phone or (order.customer.phone if getattr(order, 'customer', None) else None)
+                                customer_name = order.customer_name or "Valued Customer"
+                                items_list = order_items_to_email_list(order.items) if getattr(order, 'items', None) else []
+
+                                if to_email:
+                                    if mapped_status == OrderStatus.shipped:
+                                        asyncio.create_task(asyncio.to_thread(
+                                            send_order_shipped_email,
+                                            to_email, customer_name, order.order_number,
+                                            carrier=order.carrier or "Delhivery",
+                                            tracking_number=order.tracking_number or "",
+                                            items=items_list
+                                        ))
+                                    elif mapped_status == OrderStatus.out_for_delivery:
+                                        asyncio.create_task(asyncio.to_thread(
+                                            send_out_for_delivery_email,
+                                            to_email, customer_name, order.order_number,
+                                            shipping_address=order.shipping_address
+                                        ))
+                                    elif mapped_status == OrderStatus.delivered:
+                                        asyncio.create_task(asyncio.to_thread(
+                                            send_order_delivered_email,
+                                            to_email, customer_name, order.order_number, items_list
+                                        ))
+
+                                if to_phone:
+                                    if mapped_status == OrderStatus.shipped:
+                                        carrier = order.carrier or "Delhivery"
+                                        msg = f"Good news! Your order #{order.order_number} has been shipped via {carrier}. AWB: {order.tracking_number}. Track: https://kozmocart.com/track-order?order={order.order_number}&contact={to_phone}"
+                                        asyncio.create_task(asyncio.to_thread(sendsms_status, to_phone, msg))
+                                    elif mapped_status == OrderStatus.out_for_delivery:
+                                        msg = f"Your order #{order.order_number} is out for delivery today! Our delivery executive will arrive soon."
+                                        asyncio.create_task(asyncio.to_thread(sendsms_status, to_phone, msg))
+                                    elif mapped_status == OrderStatus.delivered:
+                                        msg = f"Delivered! Your order #{order.order_number} has arrived. Thank you for shopping with KOZMOCART!"
+                                        asyncio.create_task(asyncio.to_thread(sendsms_status, to_phone, msg))
+                            except Exception as notif_err:
+                                print(f"Failed to dispatch status notification: {notif_err}")
                             
                 await db.commit()
         except asyncio.CancelledError:
