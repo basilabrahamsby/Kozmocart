@@ -300,15 +300,28 @@ async def get_delhivery_tracking_status(waybill: str) -> Dict[str, Any]:
             res = await client.get(url, headers=headers, timeout=10.0)
             if res.status_code == 200:
                 data = res.json()
-                shipment_data = data.get("shipment_data", [])
-                if shipment_data:
-                    shipment = shipment_data[0].get("shipment", {})
-                    status_obj = shipment.get("status", {})
-                    status_name = status_obj.get("status", "")
+                shipment_data = data.get("ShipmentData") or data.get("shipment_data") or []
+                if shipment_data and len(shipment_data) > 0:
+                    item = shipment_data[0]
+                    shipment = item.get("Shipment") or item.get("shipment") or {}
+                    status_obj = shipment.get("Status") or shipment.get("status") or {}
+                    status_name = (
+                        status_obj.get("Status") or 
+                        status_obj.get("status") or 
+                        status_obj.get("Instructions") or 
+                        status_obj.get("instructions") or 
+                        ""
+                    )
+                    instructions = (
+                        status_obj.get("Instructions") or 
+                        status_obj.get("instructions") or 
+                        ""
+                    )
                     return {
                         "success": True,
                         "status": status_name,
-                        "remarks": status_obj.get("instructions", "")
+                        "remarks": instructions,
+                        "raw_status_obj": status_obj
                     }
     except Exception as e:
         logger.error(f"Delhivery tracking check error: {str(e)}")

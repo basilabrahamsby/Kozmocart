@@ -617,6 +617,67 @@ async def update_order_status(
     return enriched
 
 
+@router.post("/{order_id}/sync-tracking", response_model=OrderOut)
+async def sync_order_tracking(
+    order_id: str,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    try:
+        order_uuid = uuid.UUID(order_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid order ID format")
+
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order_uuid)
+        .options(
+            selectinload(Order.items).joinedload(OrderItem.variant).joinedload(ProductVariant.product).selectinload(Product.images),
+            selectinload(Order.status_history),
+            joinedload(Order.customer),
+        )
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if not order.tracking_number:
+        raise HTTPException(status_code=400, detail="Order does not have a tracking number")
+
+    from app.services.delhivery import get_delhivery_tracking_status
+    tracking_info = await get_delhivery_tracking_status(order.tracking_number)
+
+    if not tracking_info.get("success") or not tracking_info.get("status"):
+        raise HTTPException(status_code=400, detail=f"Tracking check failed: {tracking_info.get('remarks')}")
+
+    status_raw = str(tracking_info["status"]).lower().replace("-", " ").strip()
+    remarks_raw = str(tracking_info.get("remarks", "")).lower().replace("-", " ").strip()
+    status_combined = f"{status_raw} {remarks_raw}"
+
+    mapped_status = None
+    if "delivered" in status_combined or status_raw == "dl":
+        mapped_status = OrderStatus.delivered
+    elif "out for delivery" in status_combined or "ofd" in status_combined:
+        mapped_status = OrderStatus.out_for_delivery
+    elif any(kw in status_combined for kw in ["in transit", "transit", "shipped", "dispatched", "manifested", "pickup"]):
+        mapped_status = OrderStatus.shipped
+
+    if mapped_status and order.status != mapped_status:
+        old_status = order.status
+        order.status = mapped_status
+        history = OrderStatusHistory(
+            order_id=order.id,
+            status=mapped_status,
+            notes=f"Synced with Delhivery tracking API. Status updated from {old_status} to {mapped_status} (Delhivery Status: {tracking_info['status']})"
+        )
+        db.add(history)
+        await db.commit()
+        await db.refresh(order)
+
+    return _enrich_order(order)
+
+
 @router.patch("/{order_id}/contact", response_model=OrderOut)
 async def update_order_contact(
     order_id: str,

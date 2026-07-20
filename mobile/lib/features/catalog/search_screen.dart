@@ -818,7 +818,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: navItems.length,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         itemBuilder: (context, index) {
           final item = navItems[index];
           
@@ -838,14 +838,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             onTap: item['action'] as VoidCallback,
             child: Container(
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              margin: const EdgeInsets.only(right: 4),
               child: Text(
                 name,
+                softWrap: false,
+                maxLines: 1,
+                overflow: TextOverflow.visible,
                 style: GoogleFonts.montserrat(
-                  fontSize: 10.5,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 2.0,
+                  letterSpacing: 1.2,
                   color: isActive ? AppTheme.primaryRose : Colors.black87,
                 ),
               ),

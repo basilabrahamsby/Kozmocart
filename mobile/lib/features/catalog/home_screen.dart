@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import 'homepage_provider.dart';
 import 'product_detail_screen.dart';
 import 'search_screen.dart';
+import 'rewards_gallery_screen.dart';
 import '../../core/widgets/cached_image.dart';
 import '../../core/widgets/image_lightbox.dart';
 import '../../core/widgets/product_card.dart';
@@ -18,6 +20,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _bannerController = PageController();
   final ScrollController _scrollController = ScrollController();
   int _currentBannerIndex = 0;
@@ -145,107 +148,274 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Widget _buildTopCategoryNavBar() {
-    final navItems = [
-      {
-        'name': 'HOME',
-        'action': () {
-          _scrollController.animateTo(
-            0,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        }
-      },
-      {
-        'name': 'MEN',
-        'action': () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SearchScreen(gender: 'Men', title: 'MEN FRAGRANCES'),
-            ),
-          );
-        }
-      },
-      {
-        'name': 'WOMEN',
-        'action': () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SearchScreen(gender: 'Women', title: 'WOMEN FRAGRANCES'),
-            ),
-          );
-        }
-      },
-      {
-        'name': 'UNISEX',
-        'action': () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SearchScreen(gender: 'Unisex', title: 'UNISEX FRAGRANCES'),
-            ),
-          );
-        }
-      },
-      {
-        'name': 'BRANDS',
-        'action': () {
-          _scrollToSection(_brandsKey);
-        }
-      },
-      {
-        'name': 'OFFERS',
-        'action': () {
-          _scrollToSection(_offersKey);
-        }
-      },
-      {
-        'name': 'PRODUCTS',
-        'action': () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SearchScreen(title: 'ALL PRODUCTS'),
-            ),
-          );
-        }
-      },
-    ];
-
-    return Container(
-      height: 48,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppTheme.borderLight, width: 1.0),
-        ),
-      ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: navItems.length,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        itemBuilder: (context, index) {
-          final item = navItems[index];
-          final isHome = item['name'] == 'HOME';
-          return GestureDetector(
-            onTap: item['action'] as VoidCallback,
-            child: Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              margin: const EdgeInsets.only(right: 8),
-              child: Text(
-                item['name'].toString(),
-                style: GoogleFonts.montserrat(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2.0,
-                  color: isHome ? AppTheme.primaryRose : Colors.black87,
+  Widget _buildNavSideDrawer(BuildContext context, List<dynamic> categories) {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Drawer Luxury Header with Logo
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 18, 12, 18),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.borderLight, width: 1.0),
                 ),
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        height: 32,
+                        child: Image.asset(
+                          'assets/logo.png',
+                          height: 32,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Text(
+                              'KOZMOCART',
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryRose,
+                                letterSpacing: 2.0,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.black87, size: 22),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'LUXURY FRAGRANCE HOUSE',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryRose,
+                      letterSpacing: 2.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
+
+            // Navigation Links List
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _drawerTile(
+                    icon: Icons.home_outlined,
+                    title: 'HOME',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                      if (_scrollController.hasClients) {
+                        _scrollController.animateTo(
+                          0,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.male_outlined,
+                    title: 'MEN FRAGRANCES',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SearchScreen(gender: 'Men', title: 'MEN FRAGRANCES'),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.female_outlined,
+                    title: 'WOMEN FRAGRANCES',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SearchScreen(gender: 'Women', title: 'WOMEN FRAGRANCES'),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.wc_outlined,
+                    title: 'UNISEX FRAGRANCES',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SearchScreen(gender: 'Unisex', title: 'UNISEX FRAGRANCES'),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.grid_view_outlined,
+                    title: 'ALL PRODUCTS',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SearchScreen(title: 'ALL PRODUCTS'),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.workspace_premium_outlined,
+                    title: 'REWARDS GALLERY',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const RewardsGalleryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.diamond_outlined,
+                    title: 'ELITE BRAND HOUSES',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                      _scrollToSection(_brandsKey);
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.local_offer_outlined,
+                    title: 'PROMOTIONAL OFFERS',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                      _scrollToSection(_offersKey);
+                    },
+                  ),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: Divider(color: AppTheme.borderLight),
+                  ),
+
+                  // Account & Shopping Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    child: Text(
+                      'ACCOUNT & SHOPPING',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textMuted,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                  ),
+                  _drawerTile(
+                    icon: Icons.person_outline,
+                    title: 'MY ACCOUNT',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.push('/account');
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.favorite_border,
+                    title: 'MY WISHLIST',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.push('/wishlist');
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.shopping_bag_outlined,
+                    title: 'SHOPPING BAG',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.push('/cart');
+                    },
+                  ),
+
+                  if (categories.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: Divider(color: AppTheme.borderLight),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                      child: Text(
+                        'EXPLORE CATEGORIES',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textMuted,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                    ),
+                    ...categories.map((cat) {
+                      final name = cat['name']?.toString() ?? '';
+                      final catId = cat['id']?.toString();
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                        dense: true,
+                        title: Text(
+                          name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.black38),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => SearchScreen(categoryId: catId, title: name),
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _drawerTile({required IconData icon, required String title, required VoidCallback onTap}) {
+    return ListTile(
+      leading: Icon(icon, size: 18, color: Colors.black87),
+      title: Text(
+        title,
+        style: GoogleFonts.montserrat(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.5,
+          color: Colors.black87,
+        ),
+      ),
+      onTap: onTap,
     );
   }
 
@@ -561,147 +731,162 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               final bannerUrl = _getMediaUrl((brand['brand_banner'] ?? brand['banner_url'])?.toString());
               final desc = brand['description'] ?? 'Discover the signature collections and exclusive raw extractions crafted by the luxury house of $name.';
 
-              return Container(
-                width: 250,
-                margin: const EdgeInsets.only(right: 16, bottom: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.borderLight),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    )
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Banner Image
-                      Container(
-                        height: 100,
-                        color: const Color(0xFFF5F5F5),
-                        child: CachedImage(
-                          imageUrl: bannerUrl,
-                          fit: BoxFit.cover,
-                          errorWidget: const Icon(Icons.image_outlined, color: Colors.black12, size: 30),
-                        ),
+              final brandId = brand['id']?.toString();
+              final brandTitle = name.toString().toUpperCase();
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SearchScreen(
+                        brandId: brandId,
+                        title: brandTitle.isNotEmpty ? brandTitle : 'BRAND COLLECTION',
                       ),
-                      // Content details
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Small logo circle (floating style)
-                              Transform.translate(
-                                offset: const Offset(0, -32),
-                                child: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 4,
-                                      )
-                                    ],
-                                  ),
-                                  child: ClipOval(
-                                    child: CachedImage(
-                                      imageUrl: logoUrl,
-                                      fit: BoxFit.contain,
-                                      errorWidget: Center(
-                                        child: Text(
-                                          name.isNotEmpty ? name[0] : '✦',
-                                          style: GoogleFonts.playfairDisplay(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.accentGold,
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 250,
+                  margin: const EdgeInsets.only(right: 16, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.borderLight),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Banner Image
+                        Container(
+                          height: 100,
+                          color: const Color(0xFFF5F5F5),
+                          child: CachedImage(
+                            imageUrl: bannerUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: const Icon(Icons.image_outlined, color: Colors.black12, size: 30),
+                          ),
+                        ),
+                        // Content details
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Small logo circle (floating style)
+                                Transform.translate(
+                                  offset: const Offset(0, -32),
+                                  child: Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.1),
+                                          blurRadius: 4,
+                                        )
+                                      ],
+                                    ),
+                                    child: ClipOval(
+                                      child: CachedImage(
+                                        imageUrl: logoUrl,
+                                        fit: BoxFit.contain,
+                                        errorWidget: Center(
+                                          child: Text(
+                                            name.isNotEmpty ? name[0] : '✦',
+                                            style: GoogleFonts.playfairDisplay(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.accentGold,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              Transform.translate(
-                                offset: const Offset(0, -20),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'SIGNATURE HOUSE',
-                                      style: GoogleFonts.montserrat(
-                                        color: AppTheme.accentGold,
-                                        fontSize: 7,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.5,
+                                Transform.translate(
+                                  offset: const Offset(0, -20),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'SIGNATURE HOUSE',
+                                        style: GoogleFonts.montserrat(
+                                          color: AppTheme.accentGold,
+                                          fontSize: 7,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1.5,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      name.toString().toUpperCase(),
-                                      style: GoogleFonts.playfairDisplay(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.normal,
-                                        color: Colors.black,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        name.toString().toUpperCase(),
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                          color: Colors.black,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      desc,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 9,
-                                        color: AppTheme.textMuted,
-                                        height: 1.4,
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        desc,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 9,
+                                          color: AppTheme.textMuted,
+                                          height: 1.4,
+                                        ),
+                                        maxLines: 2,
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      maxLines: 2,
-                                      textAlign: TextAlign.center,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const Spacer(),
-                              // Explore House Button
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: const Color(0xFFE5E5EA)),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'EXPLORE HOUSE',
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 7,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.0,
-                                        color: Colors.black87,
+                                const Spacer(),
+                                // Explore House Button
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: const Color(0xFFE5E5EA)),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'EXPLORE HOUSE',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 7,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1.0,
+                                          color: Colors.black87,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Icon(Icons.chevron_right, size: 10, color: Colors.black54),
-                                  ],
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.chevron_right, size: 10, color: Colors.black54),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -718,6 +903,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final menImg = _getMediaUrl((splitBanners['men_mobile'] ?? splitBanners['men'])?.toString() ?? '/banner-men.png');
     final womenImg = _getMediaUrl((splitBanners['women_mobile'] ?? splitBanners['women'])?.toString() ?? '/banner-women.png');
 
+    final List<String> galleryUrls = [];
+    for (final r in loyaltyRewards) {
+      if (r is Map) {
+        final img = _getMediaUrl(r['image_url']?.toString() ?? '');
+        if (img.isNotEmpty) galleryUrls.add(img);
+      }
+    }
+    if (galleryUrls.isEmpty) {
+      galleryUrls.addAll([
+        _getMediaUrl('/model-banner-1.png'),
+        _getMediaUrl('/model-banner-2.png'),
+        _getMediaUrl('/model-banner-3.png'),
+      ]);
+    }
+
+    void openRewardsGallery() {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => RewardsGalleryScreen(
+            initialRewards: loyaltyRewards,
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -725,68 +935,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // 1. Column 1: For Him
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Container(
-            height: 240,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: Colors.grey.shade900,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CachedImage(
-                  imageUrl: menImg,
-                  fit: BoxFit.cover,
-                  errorWidget: Container(color: Colors.black26),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(gender: 'Men', title: 'MEN FRAGRANCES'),
                 ),
-                Container(color: Colors.black38),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'REFINED & BOLD',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white70,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'FOR HIM',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 28,
-                          fontWeight: FontWeight.normal,
-                          color: Colors.white,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'SHOP MEN',
+              );
+            },
+            child: Container(
+              height: 240,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: Colors.grey.shade900,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedImage(
+                    imageUrl: menImg,
+                    fit: BoxFit.cover,
+                    errorWidget: Container(color: Colors.black26),
+                  ),
+                  Container(color: Colors.black38),
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'REFINED & BOLD',
                           style: GoogleFonts.montserrat(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: Colors.white70,
                             letterSpacing: 2.0,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          'FOR HIM',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 28,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.white,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'SHOP MEN',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -842,102 +1061,123 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final rewardDesc = reward['description']?.toString() ?? '';
                     final pointCost = reward['point_cost']?.toString() ?? '';
 
-                    return Container(
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade900,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          CachedImage(
-                            imageUrl: rewardImg,
-                            fit: BoxFit.cover,
-                            opacity: 0.5,
-                            errorWidget: Container(color: Colors.black26),
-                          ),
-                          Container(color: Colors.black38),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  rewardType.toUpperCase(),
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w900,
-                                    color: const Color(0xFFC9A84C), // accentGold
-                                    letterSpacing: 2.0,
+                    return GestureDetector(
+                      onTap: () => openRewardsGallery(),
+                      child: Container(
+                        height: 140,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade900,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CachedImage(
+                              imageUrl: rewardImg,
+                              fit: BoxFit.cover,
+                              opacity: 0.5,
+                              errorWidget: Container(color: Colors.black26),
+                            ),
+                            Container(color: Colors.black38),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    rewardType.toUpperCase(),
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFFC9A84C), // accentGold
+                                      letterSpacing: 2.0,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  rewardName,
-                                  style: GoogleFonts.playfairDisplay(
-                                    fontSize: 14,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.white,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (rewardDesc.isNotEmpty) ...[
                                   const SizedBox(height: 4),
                                   Text(
-                                    rewardDesc,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 9,
-                                      color: Colors.white70,
-                                      height: 1.4,
+                                    rewardName,
+                                    style: GoogleFonts.playfairDisplay(
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.white,
                                     ),
-                                    maxLines: 2,
+                                    maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                ],
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  decoration: const BoxDecoration(
-                                    border: Border(top: BorderSide(color: Colors.white10)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        pointCost.isNotEmpty ? '$pointCost POINTS' : 'EXPLORE',
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 8,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.white,
-                                          letterSpacing: 1.5,
-                                        ),
+                                  if (rewardDesc.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      rewardDesc,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 9,
+                                        color: Colors.white70,
+                                        height: 1.4,
                                       ),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.arrow_forward, size: 8, color: Colors.white),
-                                    ],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    decoration: const BoxDecoration(
+                                      border: Border(top: BorderSide(color: Colors.white10)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          pointCost.isNotEmpty ? '$pointCost POINTS' : 'EXPLORE',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(Icons.arrow_forward, size: 8, color: Colors.white),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }),
                 ],
 
                 const SizedBox(height: 20),
-                Text(
-                  'VIEW FULL GALLERY',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2.0,
-                    color: Colors.black,
+                GestureDetector(
+                  onTap: () => openRewardsGallery(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black12),
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'VIEW FULL GALLERY',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2.0,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_forward, size: 10, color: Colors.black87),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -950,68 +1190,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // 3. Column 3: For Her
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Container(
-            height: 240,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: Colors.grey.shade900,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CachedImage(
-                  imageUrl: womenImg,
-                  fit: BoxFit.cover,
-                  errorWidget: Container(color: Colors.black26),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(gender: 'Women', title: 'WOMEN FRAGRANCES'),
                 ),
-                Container(color: Colors.black38),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'ELEGANT & SWEET',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white70,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'FOR HER',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 28,
-                          fontWeight: FontWeight.normal,
-                          color: Colors.white,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'SHOP WOMEN',
+              );
+            },
+            child: Container(
+              height: 240,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: Colors.grey.shade900,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedImage(
+                    imageUrl: womenImg,
+                    fit: BoxFit.cover,
+                    errorWidget: Container(color: Colors.black26),
+                  ),
+                  Container(color: Colors.black38),
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'ELEGANT & SWEET',
                           style: GoogleFonts.montserrat(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: Colors.white70,
                             letterSpacing: 2.0,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          'FOR HER',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 28,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.white,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'SHOP WOMEN',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1720,6 +1969,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final homepageAsync = ref.watch(homepageDataProvider);
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: homepageAsync.when(
+        data: (data) => _buildNavSideDrawer(context, (data['categories'] as List?) ?? []),
+        loading: () => _buildNavSideDrawer(context, []),
+        error: (_, __) => _buildNavSideDrawer(context, []),
+      ),
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -1857,20 +2112,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildTopCategoryNavBar(),
+                  Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        bottom: BorderSide(color: AppTheme.borderLight, width: 1.0),
                       ),
-                      Container(
-                        height: 48,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          border: Border(
-                            bottom: BorderSide(color: AppTheme.borderLight, width: 1.0),
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.menu, color: Colors.black87, size: 22),
+                          onPressed: () {
+                            _scaffoldKey.currentState?.openDrawer();
+                          },
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Image.asset(
+                              'assets/logo.png',
+                              height: 24,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
-                        child: IconButton(
+                        IconButton(
                           icon: const Icon(Icons.search, color: Colors.black87, size: 22),
                           onPressed: () {
                             Navigator.of(context).push(
@@ -1880,8 +2148,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             );
                           },
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   if (heroSlides.isNotEmpty)
                     AspectRatio(

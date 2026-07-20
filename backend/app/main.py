@@ -20,15 +20,14 @@ async def delhivery_status_polling_loop():
     from app.models.order import Order, OrderStatus, OrderStatusHistory
     from app.services.delhivery import get_delhivery_tracking_status
 
-    # Wait 60 seconds after startup before running the first poll
-    await asyncio.sleep(60)
+    # Wait 30 seconds after startup before running the first poll
+    await asyncio.sleep(30)
     
     while True:
         try:
             async with AsyncSessionLocal() as db:
-                # Query all active orders booked with Delhivery
+                # Query all active orders with a tracking number
                 q = select(Order).where(
-                    Order.carrier == "Delhivery",
                     Order.tracking_number.isnot(None),
                     Order.status.in_([
                         OrderStatus.confirmed,
@@ -42,16 +41,23 @@ async def delhivery_status_polling_loop():
                 orders = res.scalars().all()
 
                 for order in orders:
+                    # Match carrier case-insensitively or if missing
+                    if order.carrier and "delhivery" not in order.carrier.lower() and order.carrier != "Delhivery":
+                        continue
+
                     tracking_info = await get_delhivery_tracking_status(order.tracking_number)
                     if tracking_info.get("success") and tracking_info.get("status"):
-                        status_str = tracking_info["status"].lower()
+                        status_raw = str(tracking_info["status"]).lower().replace("-", " ").strip()
+                        remarks_raw = str(tracking_info.get("remarks", "")).lower().replace("-", " ").strip()
+                        status_combined = f"{status_raw} {remarks_raw}"
+                        
                         mapped_status = None
                         
-                        if "delivered" in status_str:
+                        if "delivered" in status_combined or status_raw == "dl":
                             mapped_status = OrderStatus.delivered
-                        elif "out for delivery" in status_str:
+                        elif "out for delivery" in status_combined or "ofd" in status_combined:
                             mapped_status = OrderStatus.out_for_delivery
-                        elif "in transit" in status_str or "shipped" in status_str:
+                        elif any(kw in status_combined for kw in ["in transit", "transit", "shipped", "dispatched", "manifested", "pickup"]):
                             mapped_status = OrderStatus.shipped
                         
                         if mapped_status and order.status != mapped_status:
@@ -72,8 +78,8 @@ async def delhivery_status_polling_loop():
         except Exception as e:
             print(f"Error in Delhivery automated polling loop: {str(e)}")
             
-        # Poll every 10 minutes in sandbox/debug mode, otherwise every 2 hours in production
-        sleep_interval = 600 if settings.DELHIVERY_SANDBOX else 7200
+        # Poll every 5 minutes in sandbox/debug mode, otherwise every 30 minutes in production
+        sleep_interval = 300 if settings.DELHIVERY_SANDBOX else 1800
         await asyncio.sleep(sleep_interval)
 
 @asynccontextmanager
