@@ -292,7 +292,7 @@ async def get_delhivery_tracking_status(waybill: str) -> Dict[str, Any]:
             "remarks": "Mock tracking response"
         }
 
-    url = f"{get_base_url(sandbox)}/api/v1/packages/json/?waybills={waybill}"
+    url = f"{get_base_url(sandbox)}/api/v1/packages/json/?waybill={waybill}"
     headers = {"Authorization": f"Token {api_token}"}
 
     try:

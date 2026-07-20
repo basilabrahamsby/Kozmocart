@@ -57,7 +57,7 @@ async def delhivery_status_polling_loop():
                             mapped_status = OrderStatus.delivered
                         elif "out for delivery" in status_combined or "ofd" in status_combined:
                             mapped_status = OrderStatus.out_for_delivery
-                        elif any(kw in status_combined for kw in ["in transit", "transit", "shipped", "dispatched", "manifested", "pickup"]):
+                        elif any(kw in status_combined for kw in ["in transit", "transit", "shipped", "dispatched", "manifested", "pickup", "pending", "agent remark", "ntd"]):
                             mapped_status = OrderStatus.shipped
                         
                         if mapped_status and order.status != mapped_status:
