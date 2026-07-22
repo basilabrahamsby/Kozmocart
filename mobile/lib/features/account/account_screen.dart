@@ -128,10 +128,17 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       children: [
                         // Profile Luxury Header Card
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: Color(0xFFF2F2F7), width: 1.5),
+                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: _isLoggedIn
+                                  ? [Colors.white, const Color(0xFFFCF9FA)]
+                                  : [const Color(0xFFFDF0F6), const Color(0xFFFAF2F5)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            border: const Border(
+                              bottom: BorderSide(color: Color(0xFFF5D6E3), width: 1.5),
                             ),
                           ),
                           child: Column(
@@ -141,15 +148,18 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+                                  border: Border.all(
+                                    color: _isLoggedIn ? const Color(0xFFD4AF37) : const Color(0xFFD2168D),
+                                    width: 1.5,
+                                  ),
                                 ),
                                 child: CircleAvatar(
                                   radius: 40,
-                                  backgroundColor: const Color(0xFFFAF6F0),
+                                  backgroundColor: _isLoggedIn ? const Color(0xFFFAF6F0) : Colors.white,
                                   child: Icon(
                                     Icons.person_outline_rounded,
                                     size: 38,
-                                    color: _isLoggedIn ? Colors.black87 : Colors.black38,
+                                    color: _isLoggedIn ? Colors.black87 : const Color(0xFFD2168D),
                                   ),
                                 ),
                               ),
@@ -177,7 +187,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 20),
 
                               if (_isLoggedIn) ...[
                                 // Elite Member Badge
@@ -205,35 +215,51 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 16),
-                              ],
-                              
-                              // Auth button
-                              OutlinedButton(
-                                onPressed: () {
-                                  if (_isLoggedIn) {
-                                    _signOut();
-                                  } else {
+                                const SizedBox(height: 20),
+                                
+                                // Sign out Outlined Button
+                                OutlinedButton(
+                                  onPressed: _signOut,
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Color(0xFFE5E5EA)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                  ),
+                                  child: Text(
+                                    'SIGN OUT',
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ),
+                              ] else ...[
+                                // Login Solid Button (Brand Rose Pink)
+                                ElevatedButton(
+                                  onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(builder: (context) => const LoginScreen()),
                                     ).then((_) => _loadProfile());
-                                  }
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: _isLoggedIn ? const Color(0xFFE5E5EA) : Colors.black87),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                ),
-                                child: Text(
-                                  _isLoggedIn ? 'SIGN OUT' : 'SIGN IN / REGISTER',
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                    letterSpacing: 1.0,
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFD2168D),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                  ),
+                                  child: Text(
+                                    'SIGN IN / REGISTER',
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                         ),
@@ -282,15 +308,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                             );
                           },
                         ),
-                        _buildMenuItem(
-                          Icons.credit_card_outlined,
-                          'Saved Payments',
-                          () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (context) => const SavedPaymentsScreen()),
-                            );
-                          },
-                        ),
+
                         _buildMenuItem(
                           Icons.help_outline_rounded,
                           'Customer Support',
