@@ -10,6 +10,7 @@ import '../wishlist/wishlist_provider.dart';
 import '../auth/login_screen.dart';
 import '../wishlist/wishlist_screen.dart';
 import 'account_subpages.dart';
+import '../../core/widgets/logo_loader.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -117,7 +118,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Colors.black87))
+            ? const LogoLoader()
             : Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 500),
