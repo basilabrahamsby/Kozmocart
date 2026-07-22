@@ -183,10 +183,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     });
 
     try {
-      // 1. Fetch free shipping limit settings from backend
+      // 1. Fetch free shipping limit settings from storefront layout settings
       double freeLimit = 999.0;
       try {
-        final settingsRes = await _apiClient.dio.get('/storefront/company/settings');
+        final settingsRes = await _apiClient.dio.get('/storefront/settings/storefront_layout');
         if (settingsRes.statusCode == 200 && settingsRes.data != null) {
           freeLimit = double.tryParse(settingsRes.data['free_shipping_limit']?.toString() ?? '999') ?? 999.0;
           setState(() {
