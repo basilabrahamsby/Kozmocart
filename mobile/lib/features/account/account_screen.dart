@@ -9,6 +9,7 @@ import '../cart/cart_provider.dart';
 import '../wishlist/wishlist_provider.dart';
 import '../auth/login_screen.dart';
 import '../wishlist/wishlist_screen.dart';
+import 'account_subpages.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -21,6 +22,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   bool _isLoggedIn = false;
   String _name = 'Guest User';
   String _email = 'Log in to sync your cart and preferences';
+  int _loyaltyPoints = 0;
   bool _isLoading = true;
 
   @override
@@ -30,18 +32,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   }
 
   Future<void> _loadProfile() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final token = await TokenManager.getToken();
       if (token == null || token.isEmpty) {
-        if (mounted) {
-          setState(() {
-            _isLoggedIn = false;
-            _name = 'Guest User';
-            _email = 'Log in to sync your preferences';
-            _isLoading = false;
-          });
-        }
+        _setGuestState();
         return;
       }
 
@@ -51,6 +47,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         final fName = data['first_name']?.toString() ?? '';
         final lName = data['last_name']?.toString() ?? '';
         final email = data['email']?.toString() ?? data['phone']?.toString() ?? '';
+        final points = data['loyalty_points'] is int ? data['loyalty_points'] as int : 0;
         final fullName = (fName.isNotEmpty || lName.isNotEmpty)
             ? '$fName $lName'.trim()
             : 'Customer';
@@ -60,6 +57,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
             _isLoggedIn = true;
             _name = fullName;
             _email = email;
+            _loyaltyPoints = points;
             _isLoading = false;
           });
         }
@@ -77,6 +75,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         _isLoggedIn = false;
         _name = 'Guest User';
         _email = 'Log in to sync your preferences';
+        _loyaltyPoints = 0;
         _isLoading = false;
       });
     }
@@ -89,7 +88,10 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       ref.read(cartProvider.notifier).clearCart();
       ref.read(wishlistProvider.notifier).clearWishlist();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logged out successfully!')),
+        SnackBar(
+          content: Text('Logged out successfully!', style: GoogleFonts.poppins(fontSize: 12)),
+          backgroundColor: Colors.black87,
+        ),
       );
       _setGuestState();
     } catch (e) {
@@ -102,54 +104,111 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Image.asset('assets/logo.png', height: R.pad(context, 26), fit: BoxFit.contain),
+        title: Image.asset('assets/logo.png', height: 26, fit: BoxFit.contain),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_outlined, color: Colors.black87, size: 20),
+            onPressed: _loadProfile,
+          ),
+        ],
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryRose))
+            ? const Center(child: CircularProgressIndicator(color: Colors.black87))
             : Center(
                 child: ConstrainedBox(
-                  constraints: R.maxContent(context),
+                  constraints: const BoxConstraints(maxWidth: 500),
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // User Profile Section
+                        // Profile Luxury Header Card
                         Container(
-                          color: AppTheme.surfaceLight,
-                          padding: EdgeInsets.symmetric(
-                            vertical: R.pad(context, 30),
-                            horizontal: R.pad(context, 24),
+                          padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Color(0xFFF2F2F7), width: 1.5),
+                            ),
                           ),
                           child: Column(
                             children: [
-                              CircleAvatar(
-                                radius: R.pad(context, 36),
-                                backgroundColor: AppTheme.primaryRose,
-                                child: Icon(Icons.person, size: R.icon(context, 40), color: Colors.white),
+                              // Elegant Profile Ring
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: const Color(0xFFFAF6F0),
+                                  child: Icon(
+                                    Icons.person_outline_rounded,
+                                    size: 38,
+                                    color: _isLoggedIn ? Colors.black87 : Colors.black38,
+                                  ),
+                                ),
                               ),
-                              SizedBox(height: R.pad(context, 14)),
+                              const SizedBox(height: 16),
+                              
+                              // Customer Name
                               Text(
                                 _name,
                                 style: GoogleFonts.montserrat(
-                                  fontSize: R.font(context, 16),
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
                                   color: Colors.black87,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: R.pad(context, 4)),
+                              const SizedBox(height: 4),
+                              
+                              // Customer Email/Phone details
                               Text(
                                 _email,
                                 style: GoogleFonts.poppins(
                                   color: AppTheme.textMuted,
-                                  fontSize: R.font(context, 12),
+                                  fontSize: 11.5,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: R.pad(context, 14)),
-                              ElevatedButton(
+                              const SizedBox(height: 16),
+
+                              if (_isLoggedIn) ...[
+                                // Elite Member Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF6F0),
+                                    border: Border.all(color: const Color(0xFFEADFCD)),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star, color: Color(0xFFD4AF37), size: 14),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'ELITE MEMBER  |  $_loyaltyPoints PTS',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.2,
+                                          color: const Color(0xFF8C6D3B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                              
+                              // Auth button
+                              OutlinedButton(
                                 onPressed: () {
                                   if (_isLoggedIn) {
                                     _signOut();
@@ -159,18 +218,18 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                     ).then((_) => _loadProfile());
                                   }
                                 },
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: R.pad(context, 20),
-                                    vertical: R.pad(context, 8),
-                                  ),
-                                  backgroundColor: _isLoggedIn ? Colors.black54 : AppTheme.primaryRose,
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: _isLoggedIn ? const Color(0xFFE5E5EA) : Colors.black87),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                                 ),
                                 child: Text(
                                   _isLoggedIn ? 'SIGN OUT' : 'SIGN IN / REGISTER',
                                   style: GoogleFonts.montserrat(
-                                    fontSize: R.font(context, 10.5),
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                    letterSpacing: 1.0,
                                   ),
                                 ),
                               ),
@@ -178,18 +237,15 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           ),
                         ),
                         
-                        SizedBox(height: R.pad(context, 16)),
+                        const SizedBox(height: 24),
                         
-                        // Settings list
+                        // Preferences Label
                         Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: R.pad(context, 24),
-                            vertical: R.pad(context, 8),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                           child: Text(
-                            'PREFERENCES',
+                            'ACCOUNT PREFERENCES',
                             style: GoogleFonts.montserrat(
-                              fontSize: R.font(context, 9.5),
+                              fontSize: 9.5,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.5,
                               color: AppTheme.textMuted,
@@ -197,54 +253,83 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           ),
                         ),
                         
-                        ListTile(
-                          leading: Icon(Icons.favorite_border, color: AppTheme.primaryRose, size: R.icon(context, 22)),
-                          title: Text('My Wishlist', style: TextStyle(fontSize: R.font(context, 14))),
-                          trailing: Icon(Icons.chevron_right, color: AppTheme.textMuted, size: R.icon(context, 20)),
-                          onTap: () {
+                        // Action menu items styled beautifully
+                        _buildMenuItem(
+                          Icons.favorite_border_rounded,
+                          'My Wishlist',
+                          () {
                             Navigator.of(context).push(
                               MaterialPageRoute(builder: (context) => const WishlistScreen()),
                             ).then((_) => _loadProfile());
                           },
                         ),
-                        const Divider(color: AppTheme.borderLight, height: 1),
-
-                        ListTile(
-                          leading: Icon(Icons.shopping_bag_outlined, color: AppTheme.primaryRose, size: R.icon(context, 22)),
-                          title: Text('My Orders', style: TextStyle(fontSize: R.font(context, 14))),
-                          trailing: Icon(Icons.chevron_right, color: AppTheme.textMuted, size: R.icon(context, 20)),
-                          onTap: () {},
+                        _buildMenuItem(
+                          Icons.shopping_bag_outlined,
+                          'My Orders',
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
+                            );
+                          },
                         ),
-                        const Divider(color: AppTheme.borderLight, height: 1),
+                        _buildMenuItem(
+                          Icons.location_on_outlined,
+                          'Shipping Addresses',
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => const ShippingAddressesScreen()),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          Icons.credit_card_outlined,
+                          'Saved Payments',
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => const SavedPaymentsScreen()),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          Icons.help_outline_rounded,
+                          'Customer Support',
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => const CustomerSupportScreen()),
+                            );
+                          },
+                        ),
                         
-                        ListTile(
-                          leading: Icon(Icons.location_on_outlined, color: AppTheme.primaryRose, size: R.icon(context, 22)),
-                          title: Text('Shipping Addresses', style: TextStyle(fontSize: R.font(context, 14))),
-                          trailing: Icon(Icons.chevron_right, color: AppTheme.textMuted, size: R.icon(context, 20)),
-                          onTap: () {},
-                        ),
-                        const Divider(color: AppTheme.borderLight, height: 1),
-
-                        ListTile(
-                          leading: Icon(Icons.credit_card_outlined, color: AppTheme.primaryRose, size: R.icon(context, 22)),
-                          title: Text('Saved Payments', style: TextStyle(fontSize: R.font(context, 14))),
-                          trailing: Icon(Icons.chevron_right, color: AppTheme.textMuted, size: R.icon(context, 20)),
-                          onTap: () {},
-                        ),
-                        const Divider(color: AppTheme.borderLight, height: 1),
-                        
-                        ListTile(
-                          leading: Icon(Icons.help_outline, color: AppTheme.primaryRose, size: R.icon(context, 22)),
-                          title: Text('Customer Support', style: TextStyle(fontSize: R.font(context, 14))),
-                          trailing: Icon(Icons.chevron_right, color: AppTheme.textMuted, size: R.icon(context, 20)),
-                          onTap: () {},
-                        ),
-                        SizedBox(height: R.pad(context, 40)),
+                        const SizedBox(height: 48),
                       ],
                     ),
                   ),
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFF2F2F7), width: 1.0),
+        ),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.black87, size: 20),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.black26, size: 13),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+        onTap: onTap,
       ),
     );
   }
