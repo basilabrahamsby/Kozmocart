@@ -27,6 +27,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   bool _isCheckingPincode = false;
   String? _pincodeStatus;
   double? _deliveryCharge;
+  double _freeShippingLimit = 999.0;
   int _selectedImageIndex = 0;
 
   // Recommendations & Enriched Product States (Next.js alignment)
@@ -182,6 +183,19 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     });
 
     try {
+      // 1. Fetch free shipping limit settings from backend
+      double freeLimit = 999.0;
+      try {
+        final settingsRes = await _apiClient.dio.get('/storefront/company/settings');
+        if (settingsRes.statusCode == 200 && settingsRes.data != null) {
+          freeLimit = double.tryParse(settingsRes.data['free_shipping_limit']?.toString() ?? '999') ?? 999.0;
+          setState(() {
+            _freeShippingLimit = freeLimit;
+          });
+        }
+      } catch (_) {}
+
+      // 2. Verify pincode with backend Delhivery lookup
       final res = await _apiClient.dio.get('/storefront/orders/shipping/verify-pincode', queryParameters: {
         'pincode': pin,
       });
@@ -190,8 +204,19 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         final data = res.data;
         setState(() {
           if (data['serviceable'] == true) {
-            _pincodeStatus = 'Delivering to $pin • COD Available';
-            _deliveryCharge = double.tryParse(data['delivery_charge']?.toString() ?? '150');
+            // Retrieve dynamic shipping fee from Delhivery API response
+            final double rawFee = double.tryParse(data['shipping_fee']?.toString() ?? '150') ?? 150.0;
+            
+            // Check if product price qualifies for free shipping
+            final product = _enrichedProduct ?? widget.product;
+            final variants = product['variants'] as List? ?? [];
+            final double price = variants.isNotEmpty 
+                ? double.tryParse(variants[0]['selling_price']?.toString() ?? '0.0') ?? 0.0
+                : 0.0;
+
+            final isFree = price >= freeLimit;
+            _deliveryCharge = isFree ? 0.0 : rawFee;
+            _pincodeStatus = 'Delivering to $pin';
           } else {
             _pincodeStatus = 'Sorry, service is not available at $pin';
           }
@@ -800,9 +825,26 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               if (_deliveryCharge != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Shipping Charge: ₹${_deliveryCharge!.toInt()}',
-                                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.black87, fontWeight: FontWeight.bold),
+                                  _deliveryCharge == 0.0
+                                      ? 'Shipping Charge: FREE'
+                                      : 'Shipping Charge: ₹${_deliveryCharge!.toInt()}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: _deliveryCharge == 0.0 ? Colors.green : Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                                if (_deliveryCharge != 0.0) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '(FREE on orders over ₹${_freeShippingLimit.toInt()})',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10,
+                                      color: Colors.black45,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ]
                             ],
                           ),
