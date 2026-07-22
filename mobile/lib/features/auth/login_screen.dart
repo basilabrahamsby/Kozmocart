@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/app_responsive.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/token_manager.dart';
 import '../cart/cart_provider.dart';
+
+// Brand Rose colors matching logo
+const Color kBrandRose = Color(0xFFD2168D);
+const Color kBrandRoseLight = Color(0xFFFDF0F6);
+const Color kBrandRoseBorder = Color(0xFFF5D6E3);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -15,7 +19,7 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProviderStateMixin {
   final _contactController = TextEditingController();
   final _otpController = TextEditingController();
   final _api = ApiClient();
@@ -26,9 +30,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Timer? _countdownTimer;
   String _loginMethod = 'email'; // 'email' or 'phone'
 
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+    _fadeController.forward();
   }
 
   void _startTimer() {
@@ -52,6 +65,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _countdownTimer?.cancel();
     _contactController.dispose();
     _otpController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -85,6 +99,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _otpSent = true;
       });
       _startTimer();
+      _fadeController.reset();
+      _fadeController.forward();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Verification code sent successfully!', style: GoogleFonts.poppins(fontSize: 12)),
@@ -154,336 +170,319 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width > 900;
-    
+    final size = MediaQuery.of(context).size;
+    final isWide = size.width > 600;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Row(
+      backgroundColor: const Color(0xFFFCF9FA), // Soft luxury off-white/rose canvas background
+      body: Stack(
         children: [
-          // Left side branding banner (visible on larger screens/desktop layout)
-          if (isDesktop)
-            Expanded(
+          // Absolute Top-Left Back Button: Always stays at the corner of the physical screen
+          Positioned(
+            top: 24,
+            left: 24,
+            child: InkWell(
+              onTap: () => Navigator.of(context).pop(),
+              borderRadius: BorderRadius.circular(20),
               child: Container(
-                color: Colors.black,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.network(
-                        "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop",
-                        fit: BoxFit.cover,
-                        opacity: const AlwaysStoppedAnimation(0.4),
-                      ),
-                    ),
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(48.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'The Art of Fragrance',
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 36,
-                                color: Colors.white,
-                                letterSpacing: 3,
-                                fontWeight: FontWeight.normal,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            Container(width: 40, height: 1, color: const Color(0xFFD4AF37)),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Exclusive access to the world\'s most prestigious perfume houses.',
-                              style: GoogleFonts.montserrat(
-                                fontSize: 11,
-                                color: Colors.white70,
-                                letterSpacing: 2,
-                                height: 2,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    )
                   ],
+                ),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 15,
+                  color: Colors.black87,
                 ),
               ),
             ),
-            
-          // Main Form Section
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              child: SafeArea(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Header Logo and Back Navigation
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ),
+
+          // Central Container
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  padding: EdgeInsets.all(isWide ? 40 : 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: kBrandRoseBorder.withOpacity(0.5)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x08000000),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Center Logo
+                      Center(
+                        child: Image.asset(
+                          'assets/logo.png',
+                          height: 32,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 36),
+
+                      // Sign In Header Title
+                      Text(
+                        _otpSent ? 'VERIFY ACCOUNT' : 'SIGN IN',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2.0,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _otpSent
+                            ? 'Enter the 6-digit authentication code sent to ${_contactController.text}'
+                            : 'Unlock your personalized scent journey',
+                        style: GoogleFonts.poppins(
+                          color: AppTheme.textMuted,
+                          fontSize: 11.5,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+
+                      if (!_otpSent) ...[
+                        // Segmented tabs (Email / Mobile)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 28),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Color(0xFFF2F2F7), width: 1.5),
+                            ),
+                          ),
+                          child: Row(
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.black87),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                              Image.asset('assets/logo.png', height: 28, fit: BoxFit.contain),
-                              const SizedBox(width: 40),
+                              _buildTabButton('email', 'Email Address'),
+                              _buildTabButton('phone', 'Mobile Number'),
                             ],
                           ),
-                          const SizedBox(height: 48),
-                          
-                          // Title & Tagline
-                          Text(
-                            _otpSent ? 'VERIFY ACCOUNT' : 'SIGN IN',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 2.5,
-                              color: Colors.black87,
-                            ),
-                            textAlign: TextAlign.center,
+                        ),
+
+                        // Form input
+                        Text(
+                          _loginMethod == 'email' ? 'EMAIL IDENTIFICATION' : 'MOBILE VERIFICATION',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                            color: Colors.black54,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _otpSent 
-                              ? 'Enter the 6-digit authentication code sent to $_contactController.text'
-                              : 'Unlock your personalized scent journey',
-                            style: GoogleFonts.poppins(
-                              color: AppTheme.textMuted,
-                              fontSize: 11,
-                              height: 1.5,
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _contactController,
+                          style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.black87),
+                          keyboardType: _loginMethod == 'email' ? TextInputType.emailAddress : TextInputType.phone,
+                          decoration: InputDecoration(
+                            hintText: _loginMethod == 'email' ? 'yourname@example.com' : '+91 99999 99999',
+                            hintStyle: GoogleFonts.poppins(color: Colors.black26, fontSize: 13),
+                            prefixIcon: Icon(
+                              _loginMethod == 'email' ? Icons.mail_outline_rounded : Icons.phone_iphone_rounded,
+                              size: 18,
+                              color: kBrandRose,
                             ),
-                            textAlign: TextAlign.center,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFFE5E5EA)),
+                            ),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: kBrandRose, width: 1.5),
+                            ),
                           ),
-                          const SizedBox(height: 40),
-                          
-                          if (!_otpSent) ...[
-                            // Segmented Method Selector (Email / Mobile)
-                            Container(
-                              margin: const EdgeInsets.only(bottom: 24),
-                              decoration: const BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(color: Color(0xFFF2F2F7), width: 1.5),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Continue CTA
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _requestOtp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : Text(
+                                  'CONTINUE',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 36),
+
+                        // Social Sign In
+                        Row(
+                          children: [
+                            const Expanded(child: Divider(color: Color(0xFFE5E5EA))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'OR CONNECT WITH',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black38,
+                                  letterSpacing: 1.0,
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  _buildTabButton('email', 'Email Address'),
-                                  _buildTabButton('phone', 'Mobile Number'),
-                                ],
-                              ),
                             ),
-                            const SizedBox(height: 8),
-                            
-                            // Custom Minimalist Text Input
+                            const Expanded(child: Divider(color: Color(0xFFE5E5EA))),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSocialButton('GOOGLE', Icons.g_mobiledata)),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildSocialButton('APPLE', Icons.apple)),
+                          ],
+                        ),
+                      ] else ...[
+                        // OTP Verification Inputs
+                        Text(
+                          'ENTER 6-DIGIT CODE',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _otpController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 8,
+                            color: Colors.black87,
+                          ),
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            counterText: '',
+                            hintText: '000000',
+                            hintStyle: GoogleFonts.montserrat(color: Colors.black12, letterSpacing: 8),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFFE5E5EA)),
+                            ),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: kBrandRose, width: 1.5),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Verify OTP CTA
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _verifyOtp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kBrandRose,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : Text(
+                                  'VERIFY & CONTINUE',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Timer countdown and resend option
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                             Text(
-                              _loginMethod == 'email' ? 'EMAIL IDENTIFICATION' : 'MOBILE VERIFICATION',
-                              style: GoogleFonts.montserrat(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                                color: Colors.black54,
-                              ),
+                              _timerSeconds > 0
+                                  ? 'Resend code in ${_timerSeconds}s'
+                                  : 'Didn\'t receive code? ',
+                              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
                             ),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: _contactController,
-                              style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.black87),
-                              keyboardType: _loginMethod == 'email' ? TextInputType.emailAddress : TextInputType.phone,
-                              decoration: InputDecoration(
-                                hintText: _loginMethod == 'email' ? 'your@email.com' : 'e.g. 9876543210',
-                                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.black26),
-                                prefixIcon: Icon(
-                                  _loginMethod == 'email' ? Icons.mail_outline : Icons.smartphone_outlined,
-                                  size: 18,
-                                  color: Colors.black54,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Color(0xFFE5E5EA)),
-                                ),
-                                focusedBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black87, width: 1.5),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-                            
-                            // Main CTA Button
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : _requestOtp,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              child: _isLoading 
-                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : Text(
-                                    'CONTINUE',
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 2,
-                                    ),
-                                  ),
-                            ),
-                            const SizedBox(height: 48),
-                            
-                            // Social Logins Divider
-                            Row(
-                              children: [
-                                const Expanded(child: Divider(color: Color(0xFFF2F2F7))),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                  child: Text(
-                                    'OR CONNECT WITH',
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 8.5,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.5,
-                                      color: AppTheme.textMuted,
-                                    ),
-                                  ),
-                                ),
-                                const Expanded(child: Divider(color: Color(0xFFF2F2F7))),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Social Logins Row
-                            Row(
-                              children: [
-                                Expanded(child: _buildSocialButton('GOOGLE')),
-                                const SizedBox(width: 16),
-                                Expanded(child: _buildSocialButton('APPLE')),
-                              ],
-                            ),
-                          ] else ...[
-                            // OTP Verification Box
-                            Text(
-                              'ACCESS CODE',
-                              style: GoogleFonts.montserrat(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: _otpController,
-                              style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.black87),
-                              keyboardType: TextInputType.number,
-                              maxLength: 6,
-                              decoration: InputDecoration(
-                                counterText: '',
-                                hintText: 'Enter 6-digit OTP',
-                                hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.black26),
-                                prefixIcon: const Icon(Icons.shield_outlined, size: 18, color: Colors.black54),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Color(0xFFE5E5EA)),
-                                ),
-                                focusedBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black87, width: 1.5),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                            
-                            ElevatedButton(
-                              onPressed: _isLoading ? null : _verifyOtp,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              child: _isLoading 
-                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : Text(
-                                    'VERIFY & CONTINUE',
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 2,
-                                    ),
-                                  ),
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Timer countdown and Resend
-                            Center(
-                              child: _timerSeconds > 0
-                                ? Text(
-                                    'Resend code in ${_timerSeconds}s',
-                                    style: GoogleFonts.poppins(
-                                      color: AppTheme.textMuted,
-                                      fontSize: 11.5,
-                                    ),
-                                  )
-                                : TextButton(
-                                    onPressed: _requestOtp,
-                                    child: Text(
-                                      'RESEND CODE',
-                                      style: GoogleFonts.montserrat(
-                                        color: Colors.black87,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.0,
-                                      ),
-                                    ),
-                                  ),
-                            ),
-                            const SizedBox(height: 16),
-                            Center(
-                              child: TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _otpSent = false;
-                                    _otpController.clear();
-                                  });
+                            if (_timerSeconds == 0)
+                              InkWell(
+                                onTap: () {
+                                  _requestOtp();
                                 },
                                 child: Text(
-                                  'CHANGE DETAILS',
-                                  style: GoogleFonts.montserrat(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 10,
+                                  'Resend',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: kBrandRose,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.0,
+                                    decoration: TextDecoration.underline,
                                   ),
                                 ),
                               ),
-                            ),
                           ],
-                          
-                          const SizedBox(height: 60),
-                          
-                          // Trust Certifications / Badges
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildTrustBadge(Icons.verified_outlined, '100% ORIGINAL'),
-                              const SizedBox(width: 24),
-                              Container(width: 1, height: 20, color: const Color(0xFFE9E9EB)),
-                              const SizedBox(width: 24),
-                              _buildTrustBadge(Icons.lock_outline, 'SECURE SYSTEM'),
-                            ],
-                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 36),
+
+                      // Secure lock badges footer
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildTrustBadge('100% ORIGINAL', Icons.verified_outlined),
+                          const SizedBox(width: 24),
+                          _buildTrustBadge('SECURE SYSTEM', Icons.lock_outline_rounded),
                         ],
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -495,7 +494,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildTabButton(String method, String label) {
-    final isActive = _loginMethod == method;
+    final active = _loginMethod == method;
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -504,13 +503,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _contactController.clear();
           });
         },
-        child: Container(
-          alignment: Alignment.center,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isActive ? Colors.black : Colors.transparent,
+                color: active ? kBrandRose : Colors.transparent,
                 width: 2.0,
               ),
             ),
@@ -518,51 +517,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Text(
             label,
             style: GoogleFonts.montserrat(
-              fontSize: 10.5,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-              color: isActive ? Colors.black87 : const Color(0xFFC7C7CC),
-              letterSpacing: 1.0,
+              fontSize: 11,
+              fontWeight: active ? FontWeight.bold : FontWeight.w500,
+              color: active ? Colors.black87 : Colors.black38,
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSocialButton(String label) {
+  Widget _buildSocialButton(String label, IconData icon) {
     return OutlinedButton(
       onPressed: () {},
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 14),
         side: const BorderSide(color: Color(0xFFE5E5EA)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        backgroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
-      child: Text(
-        label,
-        style: GoogleFonts.montserrat(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          letterSpacing: 1.5,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 18, color: Colors.black87),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: GoogleFonts.montserrat(
+              fontSize: 9.5,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTrustBadge(IconData icon, String text) {
+  Widget _buildTrustBadge(String label, IconData icon) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFFD4AF37)),
+        Icon(icon, size: 12, color: const Color(0xFFD4AF37)),
         const SizedBox(width: 6),
         Text(
-          text,
+          label,
           style: GoogleFonts.montserrat(
-            fontSize: 8.5,
+            fontSize: 7.5,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
-            color: Colors.black54,
+            color: Colors.black38,
+            letterSpacing: 0.8,
           ),
         ),
       ],
