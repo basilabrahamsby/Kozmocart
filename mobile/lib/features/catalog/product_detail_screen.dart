@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_responsive.dart';
 import '../../core/api/api_client.dart';
+import '../../core/api/token_manager.dart';
 import '../../core/widgets/cached_image.dart';
 import '../../core/widgets/product_card.dart';
 import '../../core/widgets/image_lightbox.dart';
@@ -39,6 +40,34 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   void initState() {
     super.initState();
     _loadProductDetailsAndRecommendations();
+    _autoFillAndCheckPincode();
+  }
+
+  Future<void> _autoFillAndCheckPincode() async {
+    try {
+      final token = await TokenManager.getToken();
+      if (token == null || token.isEmpty) return;
+
+      final res = await _apiClient.dio.get('/storefront/account/addresses');
+      if (res.statusCode == 200 && res.data != null) {
+        final addresses = res.data as List<dynamic>;
+        if (addresses.isNotEmpty) {
+          final firstAddress = addresses.first as Map<String, dynamic>;
+          final pin = firstAddress['pincode']?.toString().trim() ?? '';
+          if (pin.isNotEmpty && pin.length >= 6) {
+            _pincodeController.text = pin;
+            // Wait slightly for recommendations to load before triggering check pincode
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                _checkPincode();
+              }
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to autofill pincode: $e');
+    }
   }
 
   @override
