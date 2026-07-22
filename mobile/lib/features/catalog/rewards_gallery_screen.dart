@@ -11,7 +11,7 @@ import '../../core/widgets/image_lightbox.dart';
 final rewardsDataProvider = FutureProvider<List<dynamic>>((ref) async {
   final client = ref.read(apiClientProvider);
   try {
-    final res = await client.dio.get('/loyalty/rewards');
+    final res = await client.dio.get('/storefront/loyalty/rewards');
     if (res.data is List) {
       return res.data as List;
     }
