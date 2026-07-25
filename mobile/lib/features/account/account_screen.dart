@@ -9,6 +9,7 @@ import '../cart/cart_provider.dart';
 import '../wishlist/wishlist_provider.dart';
 import '../auth/login_screen.dart';
 import '../wishlist/wishlist_screen.dart';
+import '../catalog/rewards_gallery_screen.dart';
 import 'account_subpages.dart';
 import '../../core/widgets/logo_loader.dart';
 import '../../core/widgets/animated_background.dart';
@@ -282,62 +283,126 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           ),
                         ),
                         
-                        const SizedBox(height: 12),
+                        // Quick Perks Banner Grid
+                        _buildQuickPerksGrid(),
                         
-                        // Preferences Label
+                        const SizedBox(height: 8),
+                        
+                        // Preferences Section Header
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                          child: Text(
-                            'ACCOUNT PREFERENCES',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                              color: AppTheme.textMuted,
-                            ),
+                          child: Row(
+                            children: [
+                              Text(
+                                'ACCOUNT PREFERENCES',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'KOZMOCART VIP',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.0,
+                                  color: AppTheme.primaryRose,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         
-                        // Action menu items styled beautifully
+                        // Action Menu Items with luxury card styling
                         _buildMenuItem(
-                          Icons.favorite_border_rounded,
+                          Icons.favorite_rounded,
                           'My Wishlist',
                           () {
                             Navigator.of(context).push(
                               MaterialPageRoute(builder: (context) => const WishlistScreen()),
                             ).then((_) => _loadProfile());
                           },
+                          iconColor: AppTheme.primaryRose,
+                          subtitle: 'Saved fragrance favorites & collections',
                         ),
                         _buildMenuItem(
-                          Icons.shopping_bag_outlined,
-                          'My Orders',
+                          Icons.local_shipping_rounded,
+                          'My Orders & Returns',
                           () {
                             Navigator.of(context).push(
                               MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
                             );
                           },
+                          iconColor: const Color(0xFF3B82F6),
+                          subtitle: 'Track active shipments & order history',
                         ),
                         _buildMenuItem(
-                          Icons.location_on_outlined,
+                          Icons.location_on_rounded,
                           'Shipping Addresses',
                           () {
                             Navigator.of(context).push(
                               MaterialPageRoute(builder: (context) => const ShippingAddressesScreen()),
                             );
                           },
+                          iconColor: const Color(0xFF10B981),
+                          subtitle: 'Manage delivery addresses & pincodes',
                         ),
-
                         _buildMenuItem(
-                          Icons.help_outline_rounded,
-                          'Customer Support',
+                          Icons.workspace_premium_rounded,
+                          'Insider VIP Rewards',
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => const RewardsGalleryScreen()),
+                            );
+                          },
+                          iconColor: AppTheme.accentGold,
+                          subtitle: 'Redeem loyalty points for exclusive gifts',
+                        ),
+                        _buildMenuItem(
+                          Icons.headset_mic_rounded,
+                          '24/7 Customer Support',
                           () {
                             Navigator.of(context).push(
                               MaterialPageRoute(builder: (context) => const CustomerSupportScreen()),
                             );
                           },
+                          iconColor: const Color(0xFF8B5CF6),
+                          subtitle: 'Live perfumery concierge & help desk',
                         ),
                         
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 32),
+
+                        // Kozmocart Luxury Brand Footer
+                        Center(
+                          child: Column(
+                            children: [
+                              Image.asset('assets/logo.png', height: 20, fit: BoxFit.contain),
+                              const SizedBox(height: 6),
+                              Text(
+                                'HANDCRAFTED PERFUMERY • MADE FOR CONNOISSEURS',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.5,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'v2.4.0 • Kozmocart Inc.',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 9,
+                                  color: Colors.black26,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -348,25 +413,123 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
+  Widget _buildQuickPerksGrid() {
+    final perks = [
+      {'icon': Icons.local_shipping_outlined, 'title': 'EXPRESS SHIPPING', 'subtitle': 'Free on ₹999+'},
+      {'icon': Icons.verified_outlined, 'title': '100% ORIGINAL', 'subtitle': 'Direct House'},
+      {'icon': Icons.card_giftcard_outlined, 'title': 'FREE SAMPLES', 'subtitle': 'Every Order'},
+      {'icon': Icons.lock_outline_rounded, 'title': 'SECURE PAY', 'subtitle': 'COD & UPI'},
+    ];
+
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFFDF0F6), width: 1.2), // Soft Rose border divider
-        ),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryRose.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryRose.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: perks.map((p) {
+          return Expanded(
+            child: Column(
+              children: [
+                Icon(p['icon'] as IconData, size: 20, color: AppTheme.primaryRose),
+                const SizedBox(height: 6),
+                Text(
+                  p['title'] as String,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                    color: AppTheme.textNeutral,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  p['subtitle'] as String,
+                  style: GoogleFonts.poppins(
+                    fontSize: 8.5,
+                    color: AppTheme.textMuted,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    Color iconColor = AppTheme.primaryRose,
+    String? subtitle,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.borderLight, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
-        leading: Icon(icon, color: Colors.black87, size: 19),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: iconColor.withValues(alpha: 0.1),
+          ),
+          child: Icon(icon, color: iconColor, size: 18),
+        ),
         title: Text(
           title,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Colors.black87,
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFD2168D), size: 12), // Brand Rose arrow
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle,
+                style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.textMuted),
+              )
+            : null,
+        trailing: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.surfaceLight,
+          ),
+          child: const Icon(Icons.chevron_right_rounded, color: Colors.black45, size: 16),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         onTap: onTap,
       ),
     );
