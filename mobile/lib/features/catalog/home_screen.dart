@@ -579,29 +579,84 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildStoryCategoryBubbles(List<dynamic> categories) {
-    final List<Map<String, dynamic>> items = categories.isNotEmpty
-        ? categories.map((c) {
-            final name = c['name']?.toString() ?? 'Category';
-            final id = c['id']?.toString() ?? '';
-            return {
-              'id': id,
-              'name': name,
-              'icon': name.toLowerCase().contains('attar')
-                  ? Icons.opacity
-                  : (name.toLowerCase().contains('oud')
-                      ? Icons.diamond
-                      : (name.toLowerCase().contains('gift')
-                          ? Icons.card_giftcard
-                          : Icons.local_florist)),
-              'gradient': [AppTheme.primaryRose, AppTheme.accentGold],
-            };
-          }).toList()
-        : [
-            {'id': '', 'name': 'Perfumes', 'icon': Icons.local_florist, 'gradient': [AppTheme.primaryRose, AppTheme.discountOrange]},
-            {'id': '', 'name': 'Attar Oils', 'icon': Icons.opacity, 'gradient': [const Color(0xFF8B5CF6), const Color(0xFFC084FC)]},
-            {'id': '', 'name': 'Oud Luxury', 'icon': Icons.diamond, 'gradient': [const Color(0xFFF59E0B), const Color(0xFFFCD34D)]},
-            {'id': '', 'name': 'Gift Sets', 'icon': Icons.card_giftcard, 'gradient': [const Color(0xFF10B981), const Color(0xFF34D399)]},
-          ];
+    final List<Map<String, dynamic>> items = [
+      {
+        'name': 'MEN',
+        'icon': Icons.male_outlined,
+        'gradient': [AppTheme.primaryRose, const Color(0xFFFF905A)],
+        'onTap': () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(gender: 'Men', title: 'MEN FRAGRANCES'),
+            ),
+          );
+        },
+      },
+      {
+        'name': 'WOMEN',
+        'icon': Icons.female_outlined,
+        'gradient': [const Color(0xFFEC4899), const Color(0xFFF472B6)],
+        'onTap': () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(gender: 'Women', title: 'WOMEN FRAGRANCES'),
+            ),
+          );
+        },
+      },
+      {
+        'name': 'UNISEX',
+        'icon': Icons.wc_outlined,
+        'gradient': [const Color(0xFF8B5CF6), const Color(0xFFC084FC)],
+        'onTap': () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(gender: 'Unisex', title: 'UNISEX FRAGRANCES'),
+            ),
+          );
+        },
+      },
+      {
+        'name': 'ALL',
+        'icon': Icons.grid_view_outlined,
+        'gradient': [AppTheme.primaryRose, AppTheme.accentGold],
+        'onTap': () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(title: 'ALL PRODUCTS'),
+            ),
+          );
+        },
+      },
+      {
+        'name': 'REWARDS',
+        'icon': Icons.workspace_premium_outlined,
+        'gradient': [const Color(0xFFF59E0B), const Color(0xFFFCD34D)],
+        'onTap': () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const RewardsGalleryScreen(),
+            ),
+          );
+        },
+      },
+      {
+        'name': 'BRANDS',
+        'icon': Icons.diamond_outlined,
+        'gradient': [const Color(0xFF10B981), const Color(0xFF34D399)],
+        'onTap': () {
+          _scrollToSection(_brandsKey);
+        },
+      },
+      {
+        'name': 'OFFERS',
+        'icon': Icons.local_offer_outlined,
+        'gradient': [const Color(0xFFEF4444), const Color(0xFFF87171)],
+        'onTap': () {
+          _scrollToSection(_offersKey);
+        },
+      },
+    ];
 
     return Container(
       height: 96,
@@ -614,17 +669,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         itemBuilder: (context, index) {
           final item = items[index];
           final gradientColors = item['gradient'] as List<Color>;
-          final catId = item['id']?.toString() ?? '';
+          final void Function() onTapAction = item['onTap'] as void Function();
           return GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => catId.isNotEmpty
-                      ? SearchScreen(categoryId: catId, title: item['name'] as String)
-                      : SearchScreen(initialQuery: item['name'] as String),
-                ),
-              );
-            },
+            onTap: onTapAction,
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 8),
               child: Column(
@@ -2491,97 +2538,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 
 
-                  // ── Categories ────────────────────────────────────────────
-                  if (categories.isNotEmpty) ...[
-                    _buildCenteredSectionHeader('Signature Categories', 'Discover More'),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      height: 120,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: categories.length,
-                        itemBuilder: (context, index) {
-                          final cat =
-                              categories[index] as Map<String, dynamic>;
-                          final name = cat['name'] ?? '';
-                          final catImg = cat['image_url'] ??
-                              (cat['images'] is List &&
-                                      (cat['images'] as List).isNotEmpty
-                                  ? cat['images'][0]
-                                  : cat['banner_url']);
-                          final imageResolved =
-                              _getMediaUrl(catImg?.toString());
 
-                          return GestureDetector(
-                            onTap: () {
-                              final catId = cat['id']?.toString();
-                              final catName = cat['name']?.toString() ?? 'Category';
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => SearchScreen(
-                                    categoryId: catId,
-                                    title: catName,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(2.5),
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Color(0xFFFFB300),
-                                          Color(0xFFE91E63),
-                                          AppTheme.primaryRose
-                                        ],
-                                        begin: Alignment.bottomLeft,
-                                        end: Alignment.topRight,
-                                      ),
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.white),
-                                      child: ClipOval(
-                                        child: SizedBox(
-                                          width: 68,
-                                          height: 68,
-                                          child: CachedImage(
-                                            imageUrl: imageResolved,
-                                            fit: BoxFit.cover,
-                                            errorWidget: Container(
-                                              color: const Color(0xFFF5F5F5),
-                                              child: const Icon(Icons.image_outlined, color: Colors.black12, size: 20),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(name.toString().toUpperCase(),
-                                      style: GoogleFonts.montserrat(
-                                          fontSize: 8,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.black87,
-                                          letterSpacing: 0.5)),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
 
                    // ── New Arrivals (Part 1: Products 1-10) ──────────────────
                   if (newArrivals.isNotEmpty) ...[
