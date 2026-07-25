@@ -10,6 +10,7 @@ import 'rewards_gallery_screen.dart';
 import '../../core/widgets/cached_image.dart';
 import '../../core/widgets/image_lightbox.dart';
 import '../../core/widgets/product_card.dart';
+import '../../core/widgets/animated_background.dart';
 final homeScrollTargetProvider = StateProvider<String?>((ref) => null);
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -2323,13 +2324,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   'right_product_id': '',
                 };
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(homepageDataProvider);
-              await ref.read(homepageDataProvider.future);
-            },
-            color: AppTheme.primaryRose,
-            child: SingleChildScrollView(
+          return AnimatedBackground(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(homepageDataProvider);
+                await ref.read(homepageDataProvider.future);
+              },
+              color: AppTheme.primaryRose,
+              child: SingleChildScrollView(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
@@ -2702,9 +2704,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
+    ),
     );
   }
 }

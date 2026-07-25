@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_responsive.dart';
+import '../../core/widgets/animated_background.dart';
 import 'homepage_provider.dart';
 import '../../core/widgets/product_card.dart';
 
@@ -56,7 +57,8 @@ class StudioScreen extends ConsumerWidget {
           ],
         ),
       ),
-      body: CustomScrollView(
+      body: AnimatedBackground(
+        child: CustomScrollView(
         slivers: [
           // Studio Banner
           SliverToBoxAdapter(
@@ -163,6 +165,7 @@ class StudioScreen extends ConsumerWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
       ),
+    ),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'home_screen.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/cached_image.dart';
 import '../../core/widgets/product_card.dart';
+import '../../core/widgets/animated_background.dart';
 import '../../core/api/api_client.dart';
 import 'product_detail_screen.dart';
 
@@ -868,7 +869,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     // Find category name if active
     String? activeCategoryName;
-    if (widget.categoryId != null && _categories.isNotEmpty) {
+    if (_selectedCategories.isNotEmpty) {
+      activeCategoryName = _selectedCategories.first;
+    } else if (widget.categoryId != null && _categories.isNotEmpty) {
       final match = _categories.firstWhere(
         (c) => c['id']?.toString() == widget.categoryId,
         orElse: () => null,
@@ -890,8 +893,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         centerTitle: true,
         title: Image.asset('assets/logo.png', height: 26, fit: BoxFit.contain),
       ),
-      body: SafeArea(
-        child: Column(
+      body: AnimatedBackground(
+        child: SafeArea(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildTopCategoryNavBar(),
@@ -1067,21 +1071,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ? cat['images'][0]
                             : cat['banner_url']);
                     final imageResolved = _getMediaUrl(catImg?.toString());
-                    final isSelected = widget.categoryId == catId || _selectedCategories.contains(name.toString());
+                    final isSelected = _selectedCategories.contains(name.toString());
 
                     return GestureDetector(
                       onTap: () {
-                        if (isSelected) {
-                          setState(() {
-                            _selectedCategories.remove(name.toString());
-                            _applyFilters();
-                          });
-                        } else {
-                          setState(() {
+                        setState(() {
+                          if (isSelected) {
+                            _selectedCategories.clear();
+                          } else {
+                            _selectedCategories.clear();
                             _selectedCategories.add(name.toString());
-                            _applyFilters();
-                          });
-                        }
+                          }
+                          _applyFilters();
+                        });
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -1226,6 +1228,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

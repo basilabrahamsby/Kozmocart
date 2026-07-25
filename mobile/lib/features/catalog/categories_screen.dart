@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_responsive.dart';
+import '../../core/widgets/animated_background.dart';
 import 'homepage_provider.dart';
 import 'search_screen.dart';
 
@@ -113,7 +114,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: Row(
+      body: AnimatedBackground(
+        child: Row(
         children: [
           // ── Left Sidebar (Root Categories) ──
           Container(
@@ -335,6 +337,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }
