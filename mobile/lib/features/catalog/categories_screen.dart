@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_responsive.dart';
 import '../../core/widgets/animated_background.dart';
+import '../../core/widgets/product_card.dart';
 import 'homepage_provider.dart';
 import 'search_screen.dart';
 
@@ -101,6 +102,23 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final homepageData = ref.watch(homepageDataProvider);
     final apiCategories = homepageData.value?['categories'] as List?;
 
+    // Extract all products from homepage data
+    final rawProductsList = [
+      ...?(homepageData.value?['featured_products'] as List?),
+      ...?(homepageData.value?['new_arrivals'] as List?),
+      ...?(homepageData.value?['best_sellers'] as List?),
+      ...?(homepageData.value?['products'] as List?),
+    ];
+
+    final Map<String, dynamic> uniqueProductsMap = {};
+    for (var p in rawProductsList) {
+      if (p is Map<String, dynamic>) {
+        final id = p['id']?.toString() ?? p['name']?.toString() ?? '';
+        if (id.isNotEmpty) uniqueProductsMap[id] = p;
+      }
+    }
+    final List<dynamic> allProducts = uniqueProductsMap.values.toList();
+
     final categoriesList = (apiCategories != null && apiCategories.isNotEmpty)
         ? apiCategories.map((c) {
             final catName = c['name']?.toString() ?? 'Category';
@@ -130,6 +148,32 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
     final selectedCat = categoriesList[_selectedCategoryIndex.clamp(0, categoriesList.length - 1)];
     final subcats = (selectedCat['subcategories'] as List?) ?? [];
+
+    // Filter products matching current category
+    final String catId = selectedCat['id']?.toString() ?? '';
+    final String catNameLower = selectedCat['name']?.toString().toLowerCase() ?? '';
+
+    List<dynamic> categoryProducts = allProducts.where((p) {
+      if (p is! Map<String, dynamic>) return false;
+      final pCatId = p['category_id']?.toString() ?? '';
+      final pCatName = (p['category']?['name']?.toString() ?? p['category_name']?.toString() ?? '').toLowerCase();
+      final pTitle = (p['title']?.toString() ?? p['name']?.toString() ?? '').toLowerCase();
+
+      if (catId.isNotEmpty && pCatId == catId) return true;
+      if (catNameLower.isNotEmpty && (pCatName.contains(catNameLower) || catNameLower.contains(pCatName))) return true;
+
+      if (catNameLower.contains('edp') && (pTitle.contains('edp') || pTitle.contains('parfum'))) return true;
+      if (catNameLower.contains('edt') && (pTitle.contains('edt') || pTitle.contains('toilette'))) return true;
+      if (catNameLower.contains('oud') && (pTitle.contains('oud') || pTitle.contains('attar'))) return true;
+      if (catNameLower.contains('niche') && (pTitle.contains('niche') || pTitle.contains('intense'))) return true;
+
+      return false;
+    }).toList();
+
+    // If specific filter returns no match, show all available products as fallback so screen is never blank
+    if (categoryProducts.isEmpty && allProducts.isNotEmpty) {
+      categoryProducts = allProducts;
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -214,7 +258,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               ),
             ),
 
-            // ── Right Main Grid (Subcategories & Collections) ──
+            // ── Right Main Grid (Subcategories & Live Products) ──
             Expanded(
               child: Container(
                 color: Colors.white,
@@ -223,7 +267,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                     // Promotional Header Banner
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.all(14.0),
+                        padding: const EdgeInsets.all(12.0),
                         child: GestureDetector(
                           onTap: () {
                             Navigator.of(context).push(
@@ -236,7 +280,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                             );
                           },
                           child: Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFFFFF0F5), Color(0xFFFFE4E6)],
@@ -255,7 +299,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                                       Text(
                                         selectedCat['name']?.toString().toUpperCase() ?? '',
                                         style: GoogleFonts.montserrat(
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                           color: AppTheme.primaryRose,
                                           letterSpacing: 1.2,
@@ -263,9 +307,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'EXPLORE ALL PRODUCTS',
+                                        'EXPLORE ALL PRODUCTS (${categoryProducts.length})',
                                         style: GoogleFonts.poppins(
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w800,
                                           color: AppTheme.textNeutral,
                                         ),
@@ -281,14 +325,14 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                       ),
                     ),
 
-                    // Category Sub-sections Title
+                    // Curated Collections Chips Title
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         child: Text(
-                          'EXPLORE COLLECTIONS',
+                          'COLLECTIONS',
                           style: GoogleFonts.montserrat(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
                             color: AppTheme.textMuted,
@@ -297,21 +341,18 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                       ),
                     ),
 
-                    // Subcategories Grid
-                    SliverPadding(
-                      padding: const EdgeInsets.all(14),
-                      sliver: SliverGrid(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.85,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
+                    // Curated Subcategories Horizontal Grid / Bar
+                    SliverToBoxAdapter(
+                      child: Container(
+                        height: 72,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: subcats.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
                             final sub = subcats[index];
                             final icon = sub['icon'] as IconData? ?? LucideIcons.sparkles;
-
                             return GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(
@@ -325,77 +366,87 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                                 );
                               },
                               child: Container(
+                                width: 120,
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppTheme.borderLight, width: 1),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primaryRose.withValues(alpha: 0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    )
-                                  ],
+                                  color: const Color(0xFFFAFAFC),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppTheme.borderLight, width: 0.8),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Expanded(
-                                      child: Container(
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [Color(0xFFFFF0F5), Color(0xFFFFF7ED)],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                          borderRadius: BorderRadius.vertical(top: Radius.circular(11)),
-                                        ),
-                                        child: Center(
-                                          child: Icon(
-                                            icon,
-                                            size: 32,
-                                            color: AppTheme.primaryRose,
-                                          ),
-                                        ),
+                                    Icon(icon, size: 18, color: AppTheme.primaryRose),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      sub['name']?.toString() ?? '',
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textNeutral,
                                       ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            sub['name']?.toString() ?? '',
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.textNeutral,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            sub['tag']?.toString() ?? 'EXPLORE',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 8.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.discountOrange,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
                                     ),
                                   ],
                                 ),
                               ),
                             );
                           },
-                          childCount: subcats.length,
                         ),
                       ),
                     ),
+
+                    // Live Products Section Title
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 6),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'FEATURED PRODUCTS',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                            Text(
+                              '${categoryProducts.length} ITEMS',
+                              style: GoogleFonts.poppins(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryRose,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Live Product Cards Grid
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.58,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 10,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final productMap = categoryProducts[index] as Map<String, dynamic>;
+                            return ProductCard(product: productMap);
+                          },
+                          childCount: categoryProducts.length,
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
                   ],
                 ),
               ),
