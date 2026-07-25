@@ -2854,6 +2854,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
+                  // ── Luxury Trust Badges Section ────────────────────────────
+                  _buildTrustBadgesSection(),
+
                   // ── Footer ────────────────────────────────────────────────
                   const _HomeFooter(),
                 ],
@@ -2863,6 +2866,88 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
     ),
+  );
+}
+
+  Widget _buildTrustBadgesSection() {
+    final badges = [
+      {'icon': Icons.local_shipping_outlined, 'title': 'FREE SHIPPING', 'desc': 'On orders above ₹2999'},
+      {'icon': Icons.verified_outlined, 'title': '100% ORIGINAL', 'desc': 'Direct luxury imports'},
+      {'icon': Icons.card_giftcard_outlined, 'title': 'LUXURY SAMPLES', 'desc': 'Complimentary tester'},
+      {'icon': Icons.lock_outline, 'title': 'SECURE PAYMENTS', 'desc': '256-bit SSL encrypted'},
+    ];
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 2.6,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+        ),
+        itemCount: badges.length,
+        itemBuilder: (context, index) {
+          final b = badges[index];
+          return Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryRose.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(b['icon'] as IconData, size: 20, color: AppTheme.primaryRose),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      b['title'] as String,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textNeutral,
+                        letterSpacing: 0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      b['desc'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 8,
+                        color: AppTheme.textMuted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
