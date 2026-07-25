@@ -2535,84 +2535,162 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    SizedBox(
-                      height: 100,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: categories.length,
-                        itemBuilder: (context, index) {
-                          final cat = categories[index] as Map<String, dynamic>;
-                          final name = cat['name']?.toString() ?? 'Category';
-                          final catId = cat['id']?.toString();
-                          final catImg = cat['image_url'] ??
-                              (cat['images'] is List && (cat['images'] as List).isNotEmpty
-                                  ? cat['images'][0]
-                                  : cat['banner_url']);
-                          final imageResolved = _getMediaUrl(catImg?.toString());
+                    categories.length <= 4
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: categories.map((c) {
+                                final cat = c as Map<String, dynamic>;
+                                final name = cat['name']?.toString() ?? 'Category';
+                                final catId = cat['id']?.toString();
+                                final catImg = cat['image_url'] ??
+                                    (cat['images'] is List && (cat['images'] as List).isNotEmpty
+                                        ? cat['images'][0]
+                                        : cat['banner_url']);
+                                final imageResolved = _getMediaUrl(catImg?.toString());
 
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => SearchScreen(
-                                    categoryId: catId,
-                                    title: name,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 86,
-                              margin: const EdgeInsets.symmetric(horizontal: 6),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 64,
-                                    height: 64,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: AppTheme.surfaceLight,
-                                      border: Border.all(color: AppTheme.borderLight, width: 1.5),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.04),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 2),
-                                        )
-                                      ],
-                                    ),
-                                    child: ClipOval(
-                                      child: CachedImage(
-                                        imageUrl: imageResolved,
-                                        fit: BoxFit.cover,
-                                        errorWidget: Container(
-                                          color: AppTheme.surfaceLight,
-                                          child: const Icon(Icons.category_outlined, color: AppTheme.primaryRose, size: 22),
+                                return Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => SearchScreen(
+                                            categoryId: catId,
+                                            title: name,
+                                          ),
                                         ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            width: 62,
+                                            height: 62,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: AppTheme.surfaceLight,
+                                              border: Border.all(color: AppTheme.borderLight, width: 1.5),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.04),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                )
+                                              ],
+                                            ),
+                                            child: ClipOval(
+                                              child: CachedImage(
+                                                imageUrl: imageResolved,
+                                                fit: BoxFit.cover,
+                                                errorWidget: Container(
+                                                  color: AppTheme.surfaceLight,
+                                                  child: const Icon(Icons.category_outlined, color: AppTheme.primaryRose, size: 22),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            name.toUpperCase(),
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 8.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppTheme.textNeutral,
+                                              letterSpacing: 0.3,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    name.toUpperCase(),
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 8.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.textNeutral,
-                                      letterSpacing: 0.5,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
+                                );
+                              }).toList(),
                             ),
-                          );
-                        },
-                      ),
-                    ),
+                          )
+                        : SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              itemCount: categories.length,
+                              itemBuilder: (context, index) {
+                                final cat = categories[index] as Map<String, dynamic>;
+                                final name = cat['name']?.toString() ?? 'Category';
+                                final catId = cat['id']?.toString();
+                                final catImg = cat['image_url'] ??
+                                    (cat['images'] is List && (cat['images'] as List).isNotEmpty
+                                        ? cat['images'][0]
+                                        : cat['banner_url']);
+                                final imageResolved = _getMediaUrl(catImg?.toString());
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => SearchScreen(
+                                          categoryId: catId,
+                                          title: name,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 86,
+                                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          width: 64,
+                                          height: 64,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: AppTheme.surfaceLight,
+                                            border: Border.all(color: AppTheme.borderLight, width: 1.5),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(alpha: 0.04),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 2),
+                                              )
+                                            ],
+                                          ),
+                                          child: ClipOval(
+                                            child: CachedImage(
+                                              imageUrl: imageResolved,
+                                              fit: BoxFit.cover,
+                                              errorWidget: Container(
+                                                color: AppTheme.surfaceLight,
+                                                child: const Icon(Icons.category_outlined, color: AppTheme.primaryRose, size: 22),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          name.toUpperCase(),
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 8.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppTheme.textNeutral,
+                                            letterSpacing: 0.5,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                   ],
 
 
