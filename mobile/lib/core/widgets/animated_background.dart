@@ -50,20 +50,90 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
       animation: _controller,
       builder: (context, child) {
         final progress = _controller.value;
-        final double dx1 = math.sin(progress * math.pi * 2) * 35;
-        final double dy1 = math.cos(progress * math.pi * 2) * 25;
-        final double dx2 = math.cos(progress * math.pi * 2) * 30;
-        final double dy2 = math.sin(progress * math.pi * 2) * 40;
+        final double dx1 = math.sin(progress * math.pi * 2) * 55;
+        final double dy1 = math.cos(progress * math.pi * 2) * 45;
+        final double dx2 = math.cos(progress * math.pi * 2) * 50;
+        final double dy2 = math.sin(progress * math.pi * 2) * 60;
+        final double pulseScale = 1.0 + (math.sin(progress * math.pi * 2) * 0.15);
 
         return Stack(
           children: [
-            // Base background
-            Container(color: Colors.white),
+            // Soft Luxury Canvas Base
+            Container(color: const Color(0xFFFAFAFC)),
 
-            // Top-Right Drifting Luxury Glow Orb (Brand Rose)
+            // 1. Top-Right Floating Brand Rose Orb
             Positioned(
-              top: -60 + dy1,
-              right: -80 + dx1,
+              top: -80 + dy1,
+              right: -90 + dx1,
+              child: Transform.scale(
+                scale: pulseScale,
+                child: Container(
+                  width: 320,
+                  height: 320,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppTheme.primaryRose.withValues(alpha: 0.22),
+                        AppTheme.primaryRose.withValues(alpha: 0.05),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. Top-Left Floating Luxury Gold Orb
+            Positioned(
+              top: 120 - dy2,
+              left: -100 + dx2,
+              child: Transform.scale(
+                scale: 1.1 - (pulseScale - 1.0),
+                child: Container(
+                  width: 340,
+                  height: 340,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppTheme.accentGold.withValues(alpha: 0.25),
+                        AppTheme.accentGold.withValues(alpha: 0.06),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Bottom-Right Drifting Violet Accent Orb
+            Positioned(
+              bottom: 80 + dy1,
+              right: -70 - dx2,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFC084FC).withValues(alpha: 0.18),
+                      const Color(0xFFC084FC).withValues(alpha: 0.04),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                ),
+              ),
+            ),
+
+            // 4. Center-Bottom Soft Coral Shimmer
+            Positioned(
+              bottom: MediaQuery.of(context).size.height * 0.25 + (dy2 * 0.5),
+              left: MediaQuery.of(context).size.width * 0.15 + (dx1 * 0.5),
               child: Container(
                 width: 260,
                 height: 260,
@@ -71,45 +141,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppTheme.primaryRose.withValues(alpha: 0.07),
-                      AppTheme.primaryRose.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Bottom-Left Drifting Luxury Glow Orb (Brand Gold)
-            Positioned(
-              bottom: 100 + dy2,
-              left: -90 + dx2,
-              child: Container(
-                width: 280,
-                height: 280,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppTheme.accentGold.withValues(alpha: 0.08),
-                      AppTheme.accentGold.withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Center Subtle Shimmer Accent
-            Positioned(
-              top: MediaQuery.of(context).size.height * 0.45 + (dx1 * 0.5),
-              right: MediaQuery.of(context).size.width * 0.2 + (dy1 * 0.5),
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFC084FC).withValues(alpha: 0.05),
+                      AppTheme.discountOrange.withValues(alpha: 0.16),
                       Colors.transparent,
                     ],
                   ),
@@ -117,7 +149,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
               ),
             ),
 
-            // Main Content Layer
+            // Main Screen Content
             widget.child,
           ],
         );
