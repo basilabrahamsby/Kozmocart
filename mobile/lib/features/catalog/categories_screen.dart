@@ -22,44 +22,45 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
       'id': 'cat-1',
       'name': 'Perfumes',
       'icon': LucideIcons.sparkles,
-      'discount': 'UP TO 50% OFF',
+      'discount': 'EXPLORE ALL',
       'subcategories': [
-        {'name': 'Luxury Perfumes', 'image': 'https://kozmocart.com/media/products/oudh_khayali.jpg', 'tag': 'Popular'},
-        {'name': 'Eau De Parfum', 'image': 'https://kozmocart.com/media/products/marj.jpg', 'tag': 'Trending'},
-        {'name': 'Eau De Toilette', 'image': 'https://kozmocart.com/media/products/blue_star.jpg', 'tag': 'New'},
-        {'name': 'Pocket Perfumes', 'image': 'https://kozmocart.com/media/products/white_oudh.jpg', 'tag': 'Flat 40% Off'},
+        {'name': 'Luxury EDP', 'tag': 'Popular'},
+        {'name': 'Eau De Parfum', 'tag': 'Trending'},
+        {'name': 'Signature Scents', 'tag': 'New'},
+        {'name': 'Pocket Perfumes', 'tag': 'Best Value'},
       ]
     },
     {
       'id': 'cat-2',
       'name': 'Attar & Oils',
       'icon': LucideIcons.droplet,
-      'discount': 'FLAT 30% OFF',
+      'discount': 'EXPLORE ALL',
       'subcategories': [
-        {'name': 'Pure Oud Oils', 'image': 'https://kozmocart.com/media/products/cambodi_oud.jpg', 'tag': 'Premium'},
-        {'name': 'Non-Alcoholic Attar', 'image': 'https://kozmocart.com/media/products/musk_rizali.jpg', 'tag': 'Best Seller'},
-        {'name': 'Floral Concentrates', 'image': 'https://kozmocart.com/media/products/rose_gulab.jpg', 'tag': 'Top Rated'},
+        {'name': 'Pure Oud Oils', 'tag': 'Premium'},
+        {'name': 'Non-Alcoholic Attars', 'tag': 'Best Seller'},
+        {'name': 'Floral Concentrates', 'tag': 'Top Rated'},
       ]
     },
     {
       'id': 'cat-3',
-      'name': 'Gift Sets',
-      'icon': LucideIcons.gift,
-      'discount': 'MIN 40% OFF',
+      'name': 'Oud Collection',
+      'icon': LucideIcons.gem,
+      'discount': 'EXCLUSIVE',
       'subcategories': [
-        {'name': 'Luxury Hamper Sets', 'image': 'https://kozmocart.com/media/products/luxury_box.jpg', 'tag': 'Gifting'},
-        {'name': 'Travel Editions', 'image': 'https://kozmocart.com/media/products/travel_kit.jpg', 'tag': 'New'},
-        {'name': 'Couple Fragrance Combos', 'image': 'https://kozmocart.com/media/products/combo_set.jpg', 'tag': 'Hot'},
+        {'name': 'Cambodi Oud', 'tag': 'Prestige'},
+        {'name': 'Dehn Al Oud', 'tag': 'Signature'},
+        {'name': 'Oud Wood Flavour', 'tag': 'Luxury'},
       ]
     },
     {
       'id': 'cat-4',
-      'name': 'Body & Sprays',
-      'icon': LucideIcons.wind,
-      'discount': 'UNDER ₹499',
+      'name': 'Gift Sets',
+      'icon': LucideIcons.gift,
+      'discount': 'EXPLORE ALL',
       'subcategories': [
-        {'name': 'Body Mists', 'image': 'https://kozmocart.com/media/products/mist_fresh.jpg', 'tag': 'Fresh'},
-        {'name': 'Deodorant Sprays', 'image': 'https://kozmocart.com/media/products/deo_spray.jpg', 'tag': 'Daily Essential'},
+        {'name': 'Luxury Hamper Sets', 'tag': 'Gifting'},
+        {'name': 'Discovery Packs', 'tag': 'New'},
+        {'name': 'Fragrance Combos', 'tag': 'Hot'},
       ]
     },
   ];

@@ -579,14 +579,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildStoryCategoryBubbles(List<dynamic> categories) {
-    final List<Map<String, dynamic>> items = [
-      {'name': 'Perfumes', 'icon': Icons.local_florist, 'gradient': [const Color(0xFFFF3F6C), const Color(0xFFFF905A)]},
-      {'name': 'Attar Oils', 'icon': Icons.opacity, 'gradient': [const Color(0xFF8B5CF6), const Color(0xFFC084FC)]},
-      {'name': 'Oud Luxury', 'icon': Icons.diamond, 'gradient': [const Color(0xFFF59E0B), const Color(0xFFFCD34D)]},
-      {'name': 'Gift Sets', 'icon': Icons.card_giftcard, 'gradient': [const Color(0xFF10B981), const Color(0xFF34D399)]},
-      {'name': 'New In', 'icon': Icons.auto_awesome, 'gradient': [const Color(0xFFEC4899), const Color(0xFFF472B6)]},
-      {'name': 'Flat 50%', 'icon': Icons.local_offer, 'gradient': [const Color(0xFFEF4444), const Color(0xFFF87171)]},
-    ];
+    final List<Map<String, dynamic>> items = categories.isNotEmpty
+        ? categories.map((c) {
+            final name = c['name']?.toString() ?? 'Category';
+            final id = c['id']?.toString() ?? '';
+            return {
+              'id': id,
+              'name': name,
+              'icon': name.toLowerCase().contains('attar')
+                  ? Icons.opacity
+                  : (name.toLowerCase().contains('oud')
+                      ? Icons.diamond
+                      : (name.toLowerCase().contains('gift')
+                          ? Icons.card_giftcard
+                          : Icons.local_florist)),
+              'gradient': [AppTheme.primaryRose, AppTheme.accentGold],
+            };
+          }).toList()
+        : [
+            {'id': '', 'name': 'Perfumes', 'icon': Icons.local_florist, 'gradient': [AppTheme.primaryRose, AppTheme.discountOrange]},
+            {'id': '', 'name': 'Attar Oils', 'icon': Icons.opacity, 'gradient': [const Color(0xFF8B5CF6), const Color(0xFFC084FC)]},
+            {'id': '', 'name': 'Oud Luxury', 'icon': Icons.diamond, 'gradient': [const Color(0xFFF59E0B), const Color(0xFFFCD34D)]},
+            {'id': '', 'name': 'Gift Sets', 'icon': Icons.card_giftcard, 'gradient': [const Color(0xFF10B981), const Color(0xFF34D399)]},
+          ];
 
     return Container(
       height: 96,
@@ -599,11 +614,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         itemBuilder: (context, index) {
           final item = items[index];
           final gradientColors = item['gradient'] as List<Color>;
+          final catId = item['id']?.toString() ?? '';
           return GestureDetector(
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => SearchScreen(initialQuery: item['name'] as String),
+                  builder: (context) => catId.isNotEmpty
+                      ? SearchScreen(categoryId: catId, title: item['name'] as String)
+                      : SearchScreen(initialQuery: item['name'] as String),
                 ),
               );
             },

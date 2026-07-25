@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // ── Brand & Myntra Design Tokens ───────────────────────────────────────────
-  static const Color primaryRose = Color(0xFFFF3F6C);   // Myntra signature pink/rose
-  static const Color accentGold = Color(0xFFC9A84C);    // Kozmocart gold
+  // ── Brand Tokens (Matched directly to Kozmocart Logo) ──────────────────────
+  static const Color primaryRose = Color(0xFFD2168D);   // Kozmocart logo magenta rose
+  static const Color accentGold = Color(0xFFC9A84C);    // Kozmocart brand gold
   static const Color ratingAmber = Color(0xFFFFA41C);   // rating star amber
-  static const Color ratingGreen = Color(0xFF14B8A6);   // Myntra rating badge green
-  static const Color discountOrange = Color(0xFFFF905A);// Myntra discount tag orange
+  static const Color ratingGreen = Color(0xFF14B8A6);   // rating badge green
+  static const Color discountOrange = Color(0xFFFF905A);// discount tag orange
   static const Color backgroundLight = Color(0xFFFFFFFF);
   static const Color surfaceLight = Color(0xFFF5F5F6);   // Myntra light gray surface
   static const Color borderLight = Color(0xFFEAEAEC);    // Subtle borders
