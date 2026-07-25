@@ -498,6 +498,164 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildMyntraHeader(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+        color: Colors.white,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.menu, color: AppTheme.textNeutral, size: 22),
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+                SizedBox(
+                  height: 24,
+                  child: Image.asset(
+                    'assets/logo.png',
+                    height: 24,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Text(
+                      'KOZMOCART',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryRose,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.favorite_border, color: AppTheme.textNeutral, size: 22),
+                  onPressed: () => context.push('/account'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            // Myntra-style Search Pill
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const SearchScreen(autoFocus: true)),
+                );
+              },
+              child: Container(
+                height: 38,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.borderLight, width: 0.8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search, size: 18, color: AppTheme.textMuted),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Search for Perfumes, Oud, Attar & Gift Sets...',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: AppTheme.textMuted,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(Icons.camera_alt_outlined, size: 16, color: AppTheme.textMuted),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStoryCategoryBubbles(List<dynamic> categories) {
+    final List<Map<String, dynamic>> items = [
+      {'name': 'Perfumes', 'icon': Icons.local_florist, 'gradient': [const Color(0xFFFF3F6C), const Color(0xFFFF905A)]},
+      {'name': 'Attar Oils', 'icon': Icons.opacity, 'gradient': [const Color(0xFF8B5CF6), const Color(0xFFC084FC)]},
+      {'name': 'Oud Luxury', 'icon': Icons.diamond, 'gradient': [const Color(0xFFF59E0B), const Color(0xFFFCD34D)]},
+      {'name': 'Gift Sets', 'icon': Icons.card_giftcard, 'gradient': [const Color(0xFF10B981), const Color(0xFF34D399)]},
+      {'name': 'New In', 'icon': Icons.auto_awesome, 'gradient': [const Color(0xFFEC4899), const Color(0xFFF472B6)]},
+      {'name': 'Flat 50%', 'icon': Icons.local_offer, 'gradient': [const Color(0xFFEF4444), const Color(0xFFF87171)]},
+    ];
+
+    return Container(
+      height: 96,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final gradientColors = item['gradient'] as List<Color>;
+          return GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SearchScreen(initialQuery: item['name'] as String),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: gradientColors,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: CircleAvatar(
+                        radius: 22,
+                        backgroundColor: AppTheme.surfaceLight,
+                        child: Icon(
+                          item['icon'] as IconData,
+                          size: 18,
+                          color: gradientColors[0],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item['name'] as String,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textNeutral,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildCenteredSectionHeader(String title, String subtitle) {
     return Center(
       child: Column(
@@ -2112,41 +2270,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // ── Myntra Top Header (Search Pill + Actions) ──
+                  _buildMyntraHeader(context),
+                  
+                  // ── Myntra Story Category Bubbles ──
+                  _buildStoryCategoryBubbles(categories),
+
+                  // ── Deal of the Day Urgency Ticker Banner ──
                   Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      border: Border(
-                        bottom: BorderSide(color: AppTheme.borderLight, width: 1.0),
-                      ),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    color: const Color(0xFFFFF0F3),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.menu, color: Colors.black87, size: 22),
-                          onPressed: () {
-                            _scaffoldKey.currentState?.openDrawer();
-                          },
+                        Row(
+                          children: [
+                            const Icon(Icons.flash_on, size: 16, color: AppTheme.primaryRose),
+                            const SizedBox(width: 4),
+                            Text(
+                              'DEAL OF THE DAY',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryRose,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: Center(
-                            child: Image.asset(
-                              'assets/logo.png',
-                              height: 24,
-                              fit: BoxFit.contain,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryRose,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'UP TO 60% OFF',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.search, color: Colors.black87, size: 22),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const SearchScreen(autoFocus: true),
-                              ),
-                            );
-                          },
                         ),
                       ],
                     ),
