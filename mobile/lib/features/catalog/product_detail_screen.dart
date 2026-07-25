@@ -461,7 +461,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     children: [
                   // Interactive Horizontal Zoom Gallery
                   SizedBox(
-                    height: 320,
+                    height: 440,
                     child: Stack(
                       children: [
                         PageView.builder(
