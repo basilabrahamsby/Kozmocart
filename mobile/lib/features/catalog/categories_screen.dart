@@ -262,6 +262,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               child: Container(
                 color: Colors.white,
                 child: CustomScrollView(
+                  key: ValueKey(_selectedCategoryIndex),
                   slivers: [
                     // Promotional Header Banner
                     SliverToBoxAdapter(
@@ -361,12 +362,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                       sliver: SliverGrid(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.58,
+                          childAspectRatio: 0.67,
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 10,
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
+                            if (index < 0 || index >= categoryProducts.length) {
+                              return const SizedBox.shrink();
+                            }
                             final productMap = categoryProducts[index] as Map<String, dynamic>;
                             return ProductCard(product: productMap);
                           },

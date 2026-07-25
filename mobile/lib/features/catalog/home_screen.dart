@@ -1742,7 +1742,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.55,
+        childAspectRatio: 0.66,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) => ProductCard(product: products[index]),
@@ -1758,7 +1758,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.55,
+        childAspectRatio: 0.66,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {
