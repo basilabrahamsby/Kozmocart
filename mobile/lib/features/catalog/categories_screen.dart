@@ -147,7 +147,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         : _fallbackCategories;
 
     final selectedCat = categoriesList[_selectedCategoryIndex.clamp(0, categoriesList.length - 1)];
-    final subcats = (selectedCat['subcategories'] as List?) ?? [];
 
     // Filter products matching current category
     final String catId = selectedCat['id']?.toString() ?? '';
@@ -325,78 +324,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                       ),
                     ),
 
-                    // Curated Collections Chips Title
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        child: Text(
-                          'COLLECTIONS',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                            color: AppTheme.textMuted,
-                          ),
-                        ),
-                      ),
-                    ),
 
-                    // Curated Subcategories Horizontal Grid / Bar
-                    SliverToBoxAdapter(
-                      child: Container(
-                        height: 72,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: subcats.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (context, index) {
-                            final sub = subcats[index];
-                            final icon = sub['icon'] as IconData? ?? LucideIcons.sparkles;
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => SearchScreen(
-                                      categoryId: selectedCat['id']?.toString(),
-                                      initialQuery: sub['name']?.toString(),
-                                      title: sub['name']?.toString(),
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                width: 120,
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFAFAFC),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppTheme.borderLight, width: 0.8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(icon, size: 18, color: AppTheme.primaryRose),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      sub['name']?.toString() ?? '',
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.textNeutral,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
 
                     // Live Products Section Title
                     SliverToBoxAdapter(
