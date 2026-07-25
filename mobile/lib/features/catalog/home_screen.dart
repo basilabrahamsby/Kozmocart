@@ -502,8 +502,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildMyntraHeader(BuildContext context) {
     return SafeArea(
       bottom: false,
+      top: true,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+        padding: const EdgeInsets.fromLTRB(8, 2, 8, 6),
         color: Colors.white,
         child: Column(
           children: [
@@ -2198,32 +2199,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         data: (data) => _buildNavSideDrawer(context, (data['categories'] as List?) ?? []),
         loading: () => _buildNavSideDrawer(context, []),
         error: (_, __) => _buildNavSideDrawer(context, []),
-      ),
-      extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: AnimatedOpacity(
-          opacity: _appBarVisible ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 200),
-          child: IgnorePointer(
-            ignoring: !_appBarVisible,
-            child: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              centerTitle: true,
-              title: Image.asset('assets/logo.png', height: 26, fit: BoxFit.contain),
-              shape: const Border(
-                bottom: BorderSide(color: AppTheme.borderLight, width: 1.0),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.black, size: 20),
-                  onPressed: () => ref.invalidate(homepageDataProvider),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
       body: homepageAsync.when(
         loading: () => Center(
