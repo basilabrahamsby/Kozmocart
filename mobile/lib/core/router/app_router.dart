@@ -11,7 +11,6 @@ import '../../features/auth/login_screen.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final GlobalKey<NavigatorState> _shellNavigatorHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
 final GlobalKey<NavigatorState> _shellNavigatorCategoriesKey = GlobalKey<NavigatorState>(debugLabel: 'shellCategories');
-final GlobalKey<NavigatorState> _shellNavigatorStudioKey = GlobalKey<NavigatorState>(debugLabel: 'shellStudio');
 final GlobalKey<NavigatorState> _shellNavigatorCartKey = GlobalKey<NavigatorState>(debugLabel: 'shellCart');
 final GlobalKey<NavigatorState> _shellNavigatorAccountKey = GlobalKey<NavigatorState>(debugLabel: 'shellAccount');
 
@@ -51,17 +50,7 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-        // 3. Studio / Trending
-        StatefulShellBranch(
-          navigatorKey: _shellNavigatorStudioKey,
-          routes: <RouteBase>[
-            GoRoute(
-              path: '/studio',
-              builder: (BuildContext context, GoRouterState state) => const StudioScreen(),
-            ),
-          ],
-        ),
-        // 4. Bag
+        // 3. Bag
         StatefulShellBranch(
           navigatorKey: _shellNavigatorCartKey,
           routes: <RouteBase>[
@@ -71,7 +60,7 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-        // 5. Account / Profile
+        // 4. Account / Profile
         StatefulShellBranch(
           navigatorKey: _shellNavigatorAccountKey,
           routes: <RouteBase>[

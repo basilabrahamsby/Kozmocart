@@ -95,11 +95,6 @@ class NavigationShell extends ConsumerWidget {
               label: 'Categories',
             ),
             BottomNavigationBarItem(
-              icon: Icon(LucideIcons.sparkles, size: iconSize),
-              activeIcon: Icon(LucideIcons.sparkles, size: iconSize, color: AppTheme.primaryRose),
-              label: 'Studio',
-            ),
-            BottomNavigationBarItem(
               icon: bagIcon(),
               activeIcon: bagIcon(active: true),
               label: 'Bag',
