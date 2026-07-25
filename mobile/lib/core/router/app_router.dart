@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/navigation/navigation_shell.dart';
 import '../../features/catalog/home_screen.dart';
 import '../../features/catalog/categories_screen.dart';
-import '../../features/catalog/studio_screen.dart';
+import '../../features/catalog/search_screen.dart';
 import '../../features/cart/cart_screen.dart';
 import '../../features/account/account_screen.dart';
 import '../../features/auth/login_screen.dart';
@@ -11,6 +11,7 @@ import '../../features/auth/login_screen.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final GlobalKey<NavigatorState> _shellNavigatorHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
 final GlobalKey<NavigatorState> _shellNavigatorCategoriesKey = GlobalKey<NavigatorState>(debugLabel: 'shellCategories');
+final GlobalKey<NavigatorState> _shellNavigatorSearchKey = GlobalKey<NavigatorState>(debugLabel: 'shellSearch');
 final GlobalKey<NavigatorState> _shellNavigatorCartKey = GlobalKey<NavigatorState>(debugLabel: 'shellCart');
 final GlobalKey<NavigatorState> _shellNavigatorAccountKey = GlobalKey<NavigatorState>(debugLabel: 'shellAccount');
 
@@ -50,7 +51,17 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-        // 3. Bag
+        // 3. Search / Catalog
+        StatefulShellBranch(
+          navigatorKey: _shellNavigatorSearchKey,
+          routes: <RouteBase>[
+            GoRoute(
+              path: '/search',
+              builder: (BuildContext context, GoRouterState state) => const SearchScreen(),
+            ),
+          ],
+        ),
+        // 4. Bag
         StatefulShellBranch(
           navigatorKey: _shellNavigatorCartKey,
           routes: <RouteBase>[
@@ -60,7 +71,7 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-        // 4. Account / Profile
+        // 5. Account / Profile
         StatefulShellBranch(
           navigatorKey: _shellNavigatorAccountKey,
           routes: <RouteBase>[

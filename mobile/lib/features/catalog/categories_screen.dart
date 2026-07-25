@@ -18,50 +18,80 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   int _selectedCategoryIndex = 0;
 
+  final Map<String, List<Map<String, dynamic>>> _curatedSubcategories = {
+    'Eau de Parfum (EDP)': [
+      {'name': 'Luxury EDP Collection', 'tag': 'Popular', 'icon': LucideIcons.sparkles},
+      {'name': 'Intense EDP Spray', 'tag': 'Long Lasting', 'icon': LucideIcons.flame},
+      {'name': 'Signature EDP Edits', 'tag': 'Trending', 'icon': LucideIcons.star},
+      {'name': 'Travel Size EDP', 'tag': 'Best Value', 'icon': LucideIcons.packageCheck},
+    ],
+    'Eau de Toilette (EDT)': [
+      {'name': 'Fresh EDT Sprays', 'tag': 'Daily Wear', 'icon': LucideIcons.wind},
+      {'name': 'Citrus & Aqua EDT', 'tag': 'Summer Special', 'icon': LucideIcons.droplets},
+      {'name': 'Floral EDT Notes', 'tag': 'Top Rated', 'icon': LucideIcons.heart},
+      {'name': 'Sport EDT Editions', 'tag': 'Active', 'icon': LucideIcons.zap},
+    ],
+    'Niche and Classic': [
+      {'name': 'Private Blend Niche', 'tag': 'Exclusive', 'icon': LucideIcons.gem},
+      {'name': 'Artisanal Perfumes', 'tag': 'Prestige', 'icon': LucideIcons.award},
+      {'name': 'Vintage Classics', 'tag': 'Heritage', 'icon': LucideIcons.crown},
+      {'name': 'Unisex Niche Elixirs', 'tag': 'Best Seller', 'icon': LucideIcons.sparkles},
+    ],
+    'Oudh (Oriental)': [
+      {'name': 'Pure Cambodi Oud', 'tag': 'Prestige', 'icon': LucideIcons.flame},
+      {'name': 'Royal Oud Oil Attar', 'tag': '100% Pure', 'icon': LucideIcons.droplet},
+      {'name': 'Smokey Oud Wood', 'tag': 'Signature', 'icon': LucideIcons.shieldCheck},
+      {'name': 'Oriental Bakhoor & Incense', 'tag': 'Traditional', 'icon': LucideIcons.sun},
+    ],
+  };
+
   final List<Map<String, dynamic>> _fallbackCategories = [
     {
       'id': 'cat-1',
-      'name': 'Perfumes',
+      'name': 'Eau de Parfum (EDP)',
       'icon': LucideIcons.sparkles,
       'discount': 'EXPLORE ALL',
       'subcategories': [
-        {'name': 'Luxury EDP', 'tag': 'Popular'},
-        {'name': 'Eau De Parfum', 'tag': 'Trending'},
-        {'name': 'Signature Scents', 'tag': 'New'},
-        {'name': 'Pocket Perfumes', 'tag': 'Best Value'},
+        {'name': 'Luxury EDP Collection', 'tag': 'Popular', 'icon': LucideIcons.sparkles},
+        {'name': 'Intense EDP Spray', 'tag': 'Long Lasting', 'icon': LucideIcons.flame},
+        {'name': 'Signature EDP Edits', 'tag': 'Trending', 'icon': LucideIcons.star},
+        {'name': 'Travel Size EDP', 'tag': 'Best Value', 'icon': LucideIcons.packageCheck},
       ]
     },
     {
       'id': 'cat-2',
-      'name': 'Attar & Oils',
-      'icon': LucideIcons.droplet,
+      'name': 'Eau de Toilette (EDT)',
+      'icon': LucideIcons.droplets,
       'discount': 'EXPLORE ALL',
       'subcategories': [
-        {'name': 'Pure Oud Oils', 'tag': 'Premium'},
-        {'name': 'Non-Alcoholic Attars', 'tag': 'Best Seller'},
-        {'name': 'Floral Concentrates', 'tag': 'Top Rated'},
+        {'name': 'Fresh EDT Sprays', 'tag': 'Daily Wear', 'icon': LucideIcons.wind},
+        {'name': 'Citrus & Aqua EDT', 'tag': 'Summer Special', 'icon': LucideIcons.droplets},
+        {'name': 'Floral EDT Notes', 'tag': 'Top Rated', 'icon': LucideIcons.heart},
+        {'name': 'Sport EDT Editions', 'tag': 'Active', 'icon': LucideIcons.zap},
       ]
     },
     {
       'id': 'cat-3',
-      'name': 'Oud Collection',
+      'name': 'Niche and Classic',
       'icon': LucideIcons.gem,
       'discount': 'EXCLUSIVE',
       'subcategories': [
-        {'name': 'Cambodi Oud', 'tag': 'Prestige'},
-        {'name': 'Dehn Al Oud', 'tag': 'Signature'},
-        {'name': 'Oud Wood Flavour', 'tag': 'Luxury'},
+        {'name': 'Private Blend Niche', 'tag': 'Exclusive', 'icon': LucideIcons.gem},
+        {'name': 'Artisanal Perfumes', 'tag': 'Prestige', 'icon': LucideIcons.award},
+        {'name': 'Vintage Classics', 'tag': 'Heritage', 'icon': LucideIcons.crown},
+        {'name': 'Unisex Niche Elixirs', 'tag': 'Best Seller', 'icon': LucideIcons.sparkles},
       ]
     },
     {
       'id': 'cat-4',
-      'name': 'Gift Sets',
-      'icon': LucideIcons.gift,
+      'name': 'Oudh (Oriental)',
+      'icon': LucideIcons.flame,
       'discount': 'EXPLORE ALL',
       'subcategories': [
-        {'name': 'Luxury Hamper Sets', 'tag': 'Gifting'},
-        {'name': 'Discovery Packs', 'tag': 'New'},
-        {'name': 'Fragrance Combos', 'tag': 'Hot'},
+        {'name': 'Pure Cambodi Oud', 'tag': 'Prestige', 'icon': LucideIcons.flame},
+        {'name': 'Royal Oud Oil Attar', 'tag': '100% Pure', 'icon': LucideIcons.droplet},
+        {'name': 'Smokey Oud Wood', 'tag': 'Signature', 'icon': LucideIcons.shieldCheck},
+        {'name': 'Oriental Bakhoor & Incense', 'tag': 'Traditional', 'icon': LucideIcons.sun},
       ]
     },
   ];
@@ -72,15 +102,29 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final apiCategories = homepageData.value?['categories'] as List?;
 
     final categoriesList = (apiCategories != null && apiCategories.isNotEmpty)
-        ? apiCategories.map((c) => {
-            'id': c['id']?.toString() ?? '',
-            'name': c['name']?.toString() ?? 'Category',
-            'discount': 'EXPLORE ALL',
-            'subcategories': (c['subcategories'] as List? ?? []).map((sub) => {
+        ? apiCategories.map((c) {
+            final catName = c['name']?.toString() ?? 'Category';
+            final apiSubs = (c['subcategories'] as List? ?? []).map((sub) => {
               'name': sub['name']?.toString() ?? 'Collection',
-              'image': sub['image']?.toString() ?? '',
               'tag': 'Best Value',
-            }).toList(),
+              'icon': LucideIcons.sparkles,
+            }).toList();
+
+            final subcatsResolved = apiSubs.isNotEmpty
+                ? apiSubs
+                : (_curatedSubcategories[catName] ?? [
+                    {'name': 'Featured Fragrances', 'tag': 'Top Rated', 'icon': LucideIcons.star},
+                    {'name': 'New Arrivals', 'tag': 'Trending', 'icon': LucideIcons.sparkles},
+                    {'name': 'Best Sellers', 'tag': 'Popular', 'icon': LucideIcons.flame},
+                    {'name': 'Gift Collections', 'tag': 'Special', 'icon': LucideIcons.gift},
+                  ]);
+
+            return {
+              'id': c['id']?.toString() ?? '',
+              'name': catName,
+              'discount': 'EXPLORE ALL',
+              'subcategories': subcatsResolved,
+            };
           }).toList()
         : _fallbackCategories;
 
@@ -116,228 +160,249 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
       ),
       body: AnimatedBackground(
         child: Row(
-        children: [
-          // ── Left Sidebar (Root Categories) ──
-          Container(
-            width: 105,
-            color: AppTheme.surfaceLight,
-            child: ListView.builder(
-              itemCount: categoriesList.length,
-              itemBuilder: (context, index) {
-                final cat = categoriesList[index];
-                final isSelected = index == _selectedCategoryIndex;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedCategoryIndex = index);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : AppTheme.surfaceLight,
-                      border: Border(
-                        left: BorderSide(
-                          color: isSelected ? AppTheme.primaryRose : Colors.transparent,
-                          width: 4,
+          children: [
+            // ── Left Sidebar (Root Categories) ──
+            Container(
+              width: 105,
+              color: AppTheme.surfaceLight,
+              child: ListView.builder(
+                itemCount: categoriesList.length,
+                itemBuilder: (context, index) {
+                  final cat = categoriesList[index];
+                  final isSelected = index == _selectedCategoryIndex;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedCategoryIndex = index);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white : AppTheme.surfaceLight,
+                        border: Border(
+                          left: BorderSide(
+                            color: isSelected ? AppTheme.primaryRose : Colors.transparent,
+                            width: 4,
+                          ),
                         ),
                       ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          cat['icon'] as IconData? ?? LucideIcons.layers,
-                          size: 20,
-                          color: isSelected ? AppTheme.primaryRose : AppTheme.textMuted,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          cat['name']?.toString() ?? '',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.montserrat(
-                            fontSize: 10.5,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected ? AppTheme.primaryRose : AppTheme.textNeutral,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            cat['icon'] as IconData? ?? LucideIcons.layers,
+                            size: 20,
+                            color: isSelected ? AppTheme.primaryRose : AppTheme.textMuted,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // ── Right Main Grid (Subcategories & Collections) ──
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              child: CustomScrollView(
-                slivers: [
-                  // Promotional Header Banner
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(14.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFFF0F5), Color(0xFFFFE4E6)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.primaryRose.withValues(alpha: 0.2)),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    selectedCat['name']?.toString().toUpperCase() ?? '',
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryRose,
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    selectedCat['discount']?.toString() ?? 'EXCLUSIVE OFFERS',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.textNeutral,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          const SizedBox(height: 6),
+                          Text(
+                            cat['name']?.toString() ?? '',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 10,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? AppTheme.primaryRose : AppTheme.textNeutral,
                             ),
-                            const Icon(LucideIcons.chevronRight, size: 18, color: AppTheme.primaryRose),
-                          ],
-                        ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                  );
+                },
+              ),
+            ),
 
-                  // Category Sub-sections Title
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      child: Text(
-                        'EXPLORE COLLECTIONS',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                          color: AppTheme.textMuted,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Subcategories Grid
-                  SliverPadding(
-                    padding: const EdgeInsets.all(14),
-                    sliver: subcats.isEmpty
-                        ? SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 40),
-                              child: Center(
-                                child: Text(
-                                  'Explore all items in ${selectedCat['name']}',
-                                  style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textMuted),
+            // ── Right Main Grid (Subcategories & Collections) ──
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: CustomScrollView(
+                  slivers: [
+                    // Promotional Header Banner
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(14.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => SearchScreen(
+                                  categoryId: selectedCat['id']?.toString(),
+                                  title: selectedCat['name']?.toString(),
                                 ),
                               ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFF0F5), Color(0xFFFFE4E6)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.primaryRose.withValues(alpha: 0.2)),
                             ),
-                          )
-                        : SliverGrid(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.85,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final sub = subcats[index];
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => SearchScreen(initialQuery: sub['name']?.toString()),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        selectedCat['name']?.toString().toUpperCase() ?? '',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.primaryRose,
+                                          letterSpacing: 1.2,
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.surfaceLight,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: AppTheme.borderLight, width: 0.8),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        Expanded(
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF0F0F2),
-                                              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                                            ),
-                                            child: const Center(
-                                              child: Icon(LucideIcons.package, size: 28, color: AppTheme.textMuted),
-                                            ),
-                                          ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'EXPLORE ALL PRODUCTS',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.textNeutral,
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                sub['name']?.toString() ?? '',
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppTheme.textNeutral,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                sub['tag']?.toString() ?? 'SHOP NOW',
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppTheme.discountOrange,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(LucideIcons.chevronRight, size: 18, color: AppTheme.primaryRose),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Category Sub-sections Title
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        child: Text(
+                          'EXPLORE COLLECTIONS',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Subcategories Grid
+                    SliverPadding(
+                      padding: const EdgeInsets.all(14),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.85,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final sub = subcats[index];
+                            final icon = sub['icon'] as IconData? ?? LucideIcons.sparkles;
+
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => SearchScreen(
+                                      categoryId: selectedCat['id']?.toString(),
+                                      initialQuery: sub['name']?.toString(),
+                                      title: sub['name']?.toString(),
                                     ),
                                   ),
                                 );
                               },
-                              childCount: subcats.length,
-                            ),
-                          ),
-                  ),
-                ],
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppTheme.borderLight, width: 1),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primaryRose.withValues(alpha: 0.05),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    )
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [Color(0xFFFFF0F5), Color(0xFFFFF7ED)],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius: BorderRadius.vertical(top: Radius.circular(11)),
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            icon,
+                                            size: 32,
+                                            color: AppTheme.primaryRose,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            sub['name']?.toString() ?? '',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.textNeutral,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            sub['tag']?.toString() ?? 'EXPLORE',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 8.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.discountOrange,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: subcats.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }
