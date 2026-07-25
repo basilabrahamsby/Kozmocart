@@ -231,7 +231,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildEmptyState(BuildContext context) {
