@@ -10,6 +10,7 @@ import '../../core/api/token_manager.dart';
 import '../../core/widgets/cached_image.dart';
 import '../../core/widgets/product_card.dart';
 import '../../core/widgets/image_lightbox.dart';
+import '../../core/widgets/animated_background.dart';
 import '../cart/cart_provider.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -356,7 +357,31 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     final List<String> images = rawImages.map((e) => _getMediaUrl(e?.toString())).toList();
     
     final name = activeProd['name'] ?? 'Luxury Fragrance';
-    final price = activeProd['price'] ?? 999;
+    
+    final variants = activeProd['variants'] as List? ?? [];
+    double sellingPrice = 0.0;
+    double? mrpPrice;
+
+    if (variants.isNotEmpty) {
+      sellingPrice = double.tryParse(variants[0]['selling_price']?.toString() ?? '0.0') ?? 0.0;
+      final cp = variants[0]['compare_at_price'];
+      if (cp != null) mrpPrice = double.tryParse(cp.toString());
+    } else {
+      sellingPrice = double.tryParse(activeProd['price']?.toString() ?? '0.0') ?? 0.0;
+      final mrpVal = activeProd['mrp'] ?? activeProd['compare_at_price'];
+      if (mrpVal != null) mrpPrice = double.tryParse(mrpVal.toString());
+    }
+
+    if (sellingPrice == 0.0) {
+      sellingPrice = 999.0;
+    }
+
+    if (mrpPrice == null || mrpPrice <= sellingPrice) {
+      mrpPrice = (sellingPrice * 1.55).roundToDouble();
+    }
+
+    final discountPercent = (((mrpPrice - sellingPrice) / mrpPrice) * 100).round();
+    final savings = (mrpPrice - sellingPrice).round();
 
     // Scent notes parsing
     final rawScentNotes = activeProd['scent_notes'];
@@ -420,7 +445,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           bottom: BorderSide(color: AppTheme.borderLight, width: 1.0),
         ),
       ),
-      body: _isLoadingProduct
+      body: AnimatedBackground(
+        child: _isLoadingProduct
           ? const Center(
               child: CircularProgressIndicator(
                 color: AppTheme.primaryRose,
@@ -547,14 +573,65 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             color: Colors.black,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '₹${price.toString()}',
-                          style: GoogleFonts.montserrat(
-                            color: AppTheme.primaryRose,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        const SizedBox(height: 10),
+                        // Luxury Price Comparison Row
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '₹${sellingPrice.toStringAsFixed(0)}',
+                              style: GoogleFonts.montserrat(
+                                color: AppTheme.primaryRose,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'MRP ₹${mrpPrice.toStringAsFixed(0)}',
+                              style: GoogleFonts.montserrat(
+                                color: AppTheme.textMuted,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: AppTheme.textMuted,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryRose.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppTheme.primaryRose.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                '$discountPercent% OFF',
+                                style: GoogleFonts.montserrat(
+                                  color: AppTheme.primaryRose,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.verified_outlined, size: 13, color: AppTheme.ratingGreen),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Inclusive of all taxes • Save ₹$savings on this order',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.ratingGreen,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 18),
                         
@@ -1195,6 +1272,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ),
           ),
         ),
+      ),
     );
   }
 }
