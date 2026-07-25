@@ -11,6 +11,7 @@ import '../auth/login_screen.dart';
 import '../wishlist/wishlist_screen.dart';
 import 'account_subpages.dart';
 import '../../core/widgets/logo_loader.dart';
+import '../../core/widgets/animated_background.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -116,7 +117,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
           ),
         ],
       ),
-      body: SafeArea(
+      body: AnimatedBackground(
+        child: SafeArea(
         child: _isLoading
             ? const LogoLoader()
             : Center(
@@ -341,6 +343,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   ),
                 ),
               ),
+        ),
       ),
     );
   }

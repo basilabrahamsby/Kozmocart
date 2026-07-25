@@ -723,6 +723,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildScentNotesBar() {
+    final scents = [
+      {'name': 'ALL SCENTS', 'icon': '✨'},
+      {'name': 'FLORAL & ROSE', 'icon': '🌹'},
+      {'name': 'WOODY & OUD', 'icon': '🪵'},
+      {'name': 'FRESH AQUA', 'icon': '🌿'},
+      {'name': 'ROYAL ORIENTAL', 'icon': '👑'},
+      {'name': 'CITRUS EDT', 'icon': '🍋'},
+    ];
+
+    return Container(
+      height: 42,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        itemCount: scents.length,
+        itemBuilder: (context, index) {
+          final s = scents[index];
+          return GestureDetector(
+            onTap: () {
+              final query = index == 0 ? '' : s['name']!.replaceAll(RegExp(r'^[^\w]+'), '').trim();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SearchScreen(
+                    initialQuery: query,
+                    title: s['name'],
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.primaryRose.withValues(alpha: 0.3), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryRose.withValues(alpha: 0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+              ),
+              child: Row(
+                children: [
+                  Text(s['icon']!, style: const TextStyle(fontSize: 12)),
+                  const SizedBox(width: 6),
+                  Text(
+                    s['name']!,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textNeutral,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildCenteredSectionHeader(String title, String subtitle) {
     return Center(
       child: Column(
@@ -2317,6 +2385,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   
                   // ── Myntra Story Category Bubbles ──
                   _buildStoryCategoryBubbles(categories),
+
+                  // ── Luxury Scent Personality & Notes Filter Bar ──
+                  _buildScentNotesBar(),
 
 
                   if (heroSlides.isNotEmpty)

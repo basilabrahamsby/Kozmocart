@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_responsive.dart';
+import '../../core/widgets/animated_background.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/token_manager.dart';
 import '../auth/login_screen.dart';
@@ -187,7 +188,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           )
         ],
       ),
-      body: SafeArea(
+      body: AnimatedBackground(
+        child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: R.maxContent(context),
