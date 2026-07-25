@@ -2318,46 +2318,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // ── Myntra Story Category Bubbles ──
                   _buildStoryCategoryBubbles(categories),
 
-                  // ── Deal of the Day Urgency Ticker Banner ──
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    color: const Color(0xFFFFF0F3),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.flash_on, size: 16, color: AppTheme.primaryRose),
-                            const SizedBox(width: 4),
-                            Text(
-                              'DEAL OF THE DAY',
-                              style: GoogleFonts.montserrat(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: AppTheme.primaryRose,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryRose,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'UP TO 60% OFF',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
                   if (heroSlides.isNotEmpty)
                     AspectRatio(
                       aspectRatio: 3 / 4,
