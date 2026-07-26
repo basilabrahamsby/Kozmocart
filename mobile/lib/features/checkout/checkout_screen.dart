@@ -276,7 +276,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       // Construct order payload matching backend's OrderCreate
       final body = {
-        'payment_method': 'prepaid',
+        'payment_method': 'razorpay',
         'payment_gateway': 'razorpay',
         'payment_status': 'pending',
         'channel': 'storefront',
