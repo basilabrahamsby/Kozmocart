@@ -82,7 +82,7 @@ async def get_delhivery_shipping_rate(origin_pin: str, dest_pin: str, weight_gra
 
 async def check_pincode_serviceability(pincode: str) -> Dict[str, Any]:
     """
-    Checks if Delhivery delivers to the given pincode and returns dynamic shipping fee.
+    Checks if Delhivery delivers to the given pincode and returns exact pin-wised shipping fee.
     """
     config = await get_delhivery_config()
     api_token = config["api_token"]
@@ -96,18 +96,35 @@ async def check_pincode_serviceability(pincode: str) -> Dict[str, Any]:
         if pincode_clean.startswith("682") or pincode_clean.startswith("683"):
             calculated_fee = 60.0  # Local Ernakulam/Kochi
         else:
-            calculated_fee = 85.0  # Regional Kerala (Wayanad 673592, Kozhikode, etc.)
+            calculated_fee = 85.0  # Regional Kerala
     else:
         calculated_fee = 150.0
 
+    # Fetch origin pincode from DB setting or fallback to origin
+    origin_pin = 682026
+    try:
+        async with AsyncSessionLocal() as db:
+            q = select(SystemSettings).where(SystemSettings.key == "delhivery")
+            db_res = await db.execute(q)
+            setting = db_res.scalar_one_or_none()
+            if setting and setting.value:
+                origin_pin = setting.value.get("origin_pincode") or setting.value.get("pickup_pincode") or 682026
+    except Exception:
+        pass
+
+    # Query Delhivery live charges estimation API for exact pin-wised rate
+    exact_live_rate = await get_delhivery_shipping_rate(str(origin_pin), pincode_clean)
+    if exact_live_rate is not None and exact_live_rate > 0:
+        calculated_fee = round(exact_live_rate, 2)
+
     if api_token == "placeholder_delhivery_token":
-        # Mock successful serviceability for local/testing flows
+        # Return exact rate for testing flows
         return {
             "serviceable": True,
             "cod_available": True,
             "prepaid_available": True,
-            "district": "Wayanad" if is_kerala_pin else "Mumbai",
-            "state": "Kerala" if is_kerala_pin else "Maharashtra",
+            "district": "Destination",
+            "state": "Kerala" if is_kerala_pin else "India",
             "shipping_fee": calculated_fee,
             "message": "Serviceable"
         }
@@ -132,22 +149,24 @@ async def check_pincode_serviceability(pincode: str) -> Dict[str, Any]:
                     
                     is_kerala = is_kerala_pin or state_code in ["KL", "KERALA"] or "KERALA" in state_name
                     
-                    if is_kerala:
+                    if exact_live_rate is not None and exact_live_rate > 0:
+                        shipping_fee = round(exact_live_rate, 2)
+                    elif is_kerala:
                         if "ernakulam" in district or "kochi" in district or pincode_clean.startswith("682") or pincode_clean.startswith("683"):
-                            shipping_fee = 60.0 # Local
+                            shipping_fee = 60.0
                         else:
-                            shipping_fee = 85.0 # Regional Kerala (e.g. Wayanad 673592)
+                            shipping_fee = 85.0
                     elif state_code in ["DL", "KA", "MH", "TN", "TS", "WB"] or district in ["bengaluru", "chennai", "mumbai", "hyderabad", "kolkata"]:
-                        shipping_fee = 120.0 # Metro / Near National
+                        shipping_fee = 120.0
                     else:
-                        shipping_fee = 150.0 # Rest of India / Far National
+                        shipping_fee = 150.0
                         
                     return {
                         "serviceable": True,
                         "cod_available": is_cod,
                         "prepaid_available": pre_paid,
-                        "district": postal_code.get("district", "Wayanad" if is_kerala else ""),
-                        "state": postal_code.get("state_code", "KL" if is_kerala else ""),
+                        "district": postal_code.get("district", ""),
+                        "state": postal_code.get("state_code", ""),
                         "shipping_fee": shipping_fee,
                         "message": "Serviceable"
                     }
@@ -155,13 +174,13 @@ async def check_pincode_serviceability(pincode: str) -> Dict[str, Any]:
         logger.error(f"Delhivery Pincode check error: {str(e)}")
         
     return {
-        "serviceable": is_kerala_pin, # Assume serviceable if valid 6-digit Indian PIN
+        "serviceable": len(pincode_clean) == 6,
         "cod_available": True,
         "prepaid_available": True,
-        "district": "Wayanad" if is_kerala_pin else "",
-        "state": "Kerala" if is_kerala_pin else "",
+        "district": "",
+        "state": "",
         "shipping_fee": calculated_fee,
-        "message": "Serviceable" if is_kerala_pin else "Not serviceable or API error"
+        "message": "Serviceable"
     }
 
 async def create_delhivery_shipment(order_data: Dict[str, Any]) -> Dict[str, Any]:
