@@ -121,6 +121,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.dispose();
   }
 
+  double _calculatedShippingFee = 85.0;
+
+  Future<void> _verifyShippingFeeForPincode(String pincode) async {
+    if (pincode.length < 6) return;
+    try {
+      final res = await _api.dio.get('/storefront/orders/shipping/verify-pincode?pincode=$pincode');
+      if (res.statusCode == 200 && res.data != null) {
+        final fee = double.tryParse(res.data['shipping_fee']?.toString() ?? '85') ?? 85.0;
+        if (mounted) {
+          setState(() {
+            _calculatedShippingFee = fee;
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
   Future<void> _loadAddresses() async {
     setState(() => _isLoading = true);
     try {
@@ -136,6 +153,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             orElse: () => list.first,
           );
           _showNewAddressForm = false;
+          if (_selectedAddress != null && _selectedAddress!['pincode'] != null) {
+            _verifyShippingFeeForPincode(_selectedAddress!['pincode'].toString());
+          }
         } else {
           _showNewAddressForm = true;
         }
@@ -251,7 +271,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         subtotal += item.price * item.quantity;
       }
       final isFreeShipping = subtotal >= _freeShippingLimit;
-      final shippingFee = isFreeShipping ? 0.0 : 150.0;
+      final shippingFee = isFreeShipping ? 0.0 : _calculatedShippingFee;
 
       // Construct order payload matching backend's OrderCreate
       final body = {
@@ -606,7 +626,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       subtotal += item.price * item.quantity;
     }
     final isFreeShipping = subtotal >= _freeShippingLimit;
-    final shippingFee = isFreeShipping ? 0.0 : 150.0;
+    final shippingFee = isFreeShipping ? 0.0 : _calculatedShippingFee;
     final total = subtotal + shippingFee;
 
     return Scaffold(
