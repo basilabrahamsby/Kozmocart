@@ -322,9 +322,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       }
     } catch (e) {
       setState(() => _isSubmitting = false);
-      final errorMsg = e.toString().contains('400')
-          ? 'Failed to verify checkout. Adjust details/check stock.'
-          : 'Checkout failed. Please try again.';
+      String errorMsg = 'Checkout failed. Please try again.';
+      if (e is DioException && e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map && data.containsKey('detail')) {
+          errorMsg = data['detail'].toString();
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMsg)));
     }
   }
