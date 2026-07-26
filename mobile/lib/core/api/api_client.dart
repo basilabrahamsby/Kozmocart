@@ -27,8 +27,12 @@ class ApiClient {
   ApiClient() {
     dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 60),
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      headers: {
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+      },
     ));
 
     dio.interceptors.add(

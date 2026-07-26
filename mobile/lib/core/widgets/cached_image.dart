@@ -52,8 +52,8 @@ class CachedImage extends StatelessWidget {
       height: height,
       fit: fit,
       alignment: alignment,
-      memCacheWidth: width != null ? (width! * 2).toInt() : null,
-      memCacheHeight: height != null ? (height! * 2).toInt() : null,
+      memCacheWidth: width != null ? (width! * 2).toInt() : 800,
+      memCacheHeight: height != null ? (height! * 2).toInt() : 800,
       errorWidget: (context, url, error) =>
           errorWidget ?? Container(color: Colors.grey.shade200),
     );
