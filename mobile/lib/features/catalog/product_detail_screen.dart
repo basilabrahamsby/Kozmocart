@@ -427,11 +427,23 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     // Gallery images parsing
     final List<dynamic> galleryList = activeProd['gallery_images'] as List? ?? [];
 
-    final shortDescription = activeProd['short_description']?.toString().isNotEmpty == true
-        ? activeProd['short_description']?.toString()
-        : 'An immersive sensory journey crafted by world-class perfumers. This signature masterpiece balances rare raw extracts with cutting-edge molecular engineering, producing a timeless scent trail that adapts dynamically to your skin chemistry. Designed for connoisseurs of authentic luxury.';
+    final rawShort = activeProd['short_description']?.toString().trim();
+    final rawFull = activeProd['full_description']?.toString().trim();
+    final rawDesc = activeProd['description']?.toString().trim();
 
-    final fullDescription = activeProd['full_description']?.toString() ?? '';
+    final shortDescription = (rawShort != null && rawShort.isNotEmpty)
+        ? rawShort
+        : (rawDesc != null && rawDesc.isNotEmpty)
+            ? rawDesc
+            : 'An immersive sensory journey crafted by world-class perfumers. This signature masterpiece balances rare raw extracts with cutting-edge molecular engineering, producing a timeless scent trail that adapts dynamically to your skin chemistry. Designed for connoisseurs of authentic luxury.';
+
+    final fullDescription = (rawFull != null && rawFull.isNotEmpty)
+        ? rawFull
+        : (rawDesc != null && rawDesc.isNotEmpty && rawShort != null && rawShort.isNotEmpty)
+            ? rawDesc
+            : (rawDesc != null && rawDesc.isNotEmpty && rawDesc != shortDescription)
+                ? rawDesc
+                : '';
 
     return Scaffold(
       backgroundColor: Colors.white,
