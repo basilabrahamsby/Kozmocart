@@ -647,7 +647,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'icon': Icons.diamond_outlined,
         'gradient': [const Color(0xFF10B981), const Color(0xFF34D399)],
         'onTap': () {
-          _scrollToSection(_brandsKey);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(title: 'OFFICIAL BRAND COLLECTIONS'),
+            ),
+          );
         },
       },
       {
@@ -655,7 +659,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'icon': Icons.local_offer_outlined,
         'gradient': [const Color(0xFFEF4444), const Color(0xFFF87171)],
         'onTap': () {
-          _scrollToSection(_offersKey);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(
+                onSale: true,
+                title: 'EXCLUSIVE OFFERS & DEALS',
+              ),
+            ),
+          );
         },
       },
     ];

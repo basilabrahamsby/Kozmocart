@@ -19,6 +19,7 @@ class SearchScreen extends ConsumerStatefulWidget {
   final String? gender;
   final bool? isFeatured;
   final bool? isNewArrival;
+  final bool? onSale;
   final String? title;
   final bool autoFocus;
 
@@ -30,6 +31,7 @@ class SearchScreen extends ConsumerStatefulWidget {
     this.gender,
     this.isFeatured,
     this.isNewArrival,
+    this.onSale,
     this.title,
     this.autoFocus = false,
   });
@@ -185,6 +187,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       };
       if (widget.isFeatured != null) params['is_featured'] = widget.isFeatured;
       if (widget.isNewArrival != null) params['is_new_arrival'] = widget.isNewArrival;
+      if (widget.onSale != null) params['on_sale'] = widget.onSale;
 
       final res = await _apiClient.dio.get('/storefront/products', queryParameters: params);
       setState(() {
@@ -203,14 +206,42 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void _applyFilters() {
     List<dynamic> results = List.from(_allProducts);
 
-    // 0. Discovery Search Check
-    if (_query.isNotEmpty) {
-      final q = _query.toLowerCase();
+    // 0. On-Sale / Offers Check
+    if (widget.onSale == true) {
+      results = results.where((p) {
+        final variants = p['variants'] as List?;
+        if (variants != null && variants.isNotEmpty) {
+          for (var v in variants) {
+            final sell = double.tryParse(v['selling_price']?.toString() ?? '0') ?? 0;
+            final comp = double.tryParse(v['compare_at_price']?.toString() ?? '0') ?? 0;
+            if (comp > sell && sell > 0) return true;
+          }
+        }
+        final disc = (p['discount'] ?? p['discount_percentage'] ?? '').toString();
+        return disc.isNotEmpty && disc != '0';
+      }).toList();
+      if (results.isEmpty && _allProducts.isNotEmpty) {
+        results = List.from(_allProducts);
+      }
+    }
+
+    // 0b. Discovery Search Check
+    if (_query.trim().isNotEmpty) {
+      final q = _query.trim().toLowerCase();
       results = results.where((p) {
         final name = (p['name']?.toString() ?? '').toLowerCase();
-        final brand = (p['brand_name']?.toString() ?? '').toLowerCase();
-        final desc = (p['short_description']?.toString() ?? '').toLowerCase();
-        return name.contains(q) || brand.contains(q) || desc.contains(q);
+        final title = (p['title']?.toString() ?? '').toLowerCase();
+        final brand = (p['brand_name']?.toString() ?? p['brand']?['name']?.toString() ?? '').toLowerCase();
+        final cat = (p['category_name']?.toString() ?? p['category']?['name']?.toString() ?? '').toLowerCase();
+        final desc = (p['description']?.toString() ?? p['short_description']?.toString() ?? '').toLowerCase();
+        final notes = (p['fragrance_notes']?.toString() ?? '').toLowerCase();
+
+        return name.contains(q) ||
+            title.contains(q) ||
+            brand.contains(q) ||
+            cat.contains(q) ||
+            desc.contains(q) ||
+            notes.contains(q);
       }).toList();
     }
 
@@ -837,15 +868,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       {
         'name': 'BRANDS',
         'action': () {
-          ref.read(homeScrollTargetProvider.notifier).state = 'brands';
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          if (widget.title == 'OFFICIAL BRAND COLLECTIONS') return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(title: 'OFFICIAL BRAND COLLECTIONS'),
+            ),
+          );
         }
       },
       {
         'name': 'OFFERS',
         'action': () {
-          ref.read(homeScrollTargetProvider.notifier).state = 'offers';
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          if (widget.onSale == true) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(
+                onSale: true,
+                title: 'EXCLUSIVE OFFERS & DEALS',
+              ),
+            ),
+          );
         }
       },
       {
@@ -962,7 +1004,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           autofocus: widget.autoFocus,
                           textInputAction: TextInputAction.search,
                           onChanged: (val) {
-                            setState(() {});
+                            setState(() {
+                              _query = val;
+                              _applyFilters();
+                            });
                           },
                           onSubmitted: (val) {
                             setState(() {
