@@ -20,16 +20,27 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   int _selectedCategoryIndex = 0;
   List<dynamic> _allCatalogProducts = [];
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+  int _page = 1;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _fetchFullCatalog();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 300) {
+      _fetchMoreCatalog();
+    }
   }
 
   Future<void> _fetchFullCatalog() async {
     try {
-      final res = await ApiClient().dio.get('/storefront/products');
+      final res = await ApiClient().dio.get('/storefront/products', queryParameters: {'limit': 200});
       if (res.statusCode == 200 && res.data != null) {
         final data = res.data;
         final list = data is List ? data : (data['items'] ?? data['products'] ?? []);
@@ -40,6 +51,38 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         }
       }
     } catch (_) {}
+  }
+
+  Future<void> _fetchMoreCatalog() async {
+    if (_isFetchingMore || !_hasMore) return;
+    setState(() => _isFetchingMore = true);
+    try {
+      final res = await ApiClient().dio.get('/storefront/products', queryParameters: {'skip': _page * 50, 'limit': 50});
+      if (res.statusCode == 200 && res.data != null) {
+        final data = res.data;
+        final list = data is List ? data : (data['items'] ?? data['products'] ?? []);
+        if (mounted && list is List) {
+          if (list.isEmpty) {
+            _hasMore = false;
+          } else {
+            _page++;
+            setState(() {
+              _allCatalogProducts.addAll(list);
+            });
+          }
+        }
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isFetchingMore = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   final Map<String, List<Map<String, dynamic>>> _curatedSubcategories = {
@@ -287,6 +330,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               child: Container(
                 color: Colors.white,
                 child: CustomScrollView(
+                  controller: _scrollController,
                   key: ValueKey(_selectedCategoryIndex),
                   slivers: [
                     // Promotional Header Banner
@@ -403,6 +447,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                         ),
                       ),
                     ),
+                    if (_isFetchingMore)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(color: AppTheme.primaryRose, strokeWidth: 2.5),
+                          ),
+                        ),
+                      ),
                     const SliverToBoxAdapter(child: SizedBox(height: 24)),
                   ],
                 ),

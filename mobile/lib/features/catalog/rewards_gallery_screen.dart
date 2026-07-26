@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
+import '../../core/api/token_manager.dart';
+import '../auth/login_screen.dart';
 import 'homepage_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/cached_image.dart';
@@ -34,6 +36,76 @@ class RewardsGalleryScreen extends ConsumerStatefulWidget {
 }
 
 class _RewardsGalleryScreenState extends ConsumerState<RewardsGalleryScreen> {
+  bool _isLoggedIn = false;
+  int _userLoyaltyPoints = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthAndPoints();
+  }
+
+  Future<void> _checkAuthAndPoints() async {
+    try {
+      final token = await TokenManager.getToken();
+      if (token != null && token.isNotEmpty) {
+        final res = await ApiClient().dio.get('/storefront/account/me');
+        if (res.statusCode == 200 && res.data != null) {
+          final pts = int.tryParse(res.data['loyalty_points']?.toString() ?? '0') ?? 0;
+          if (mounted) {
+            setState(() {
+              _isLoggedIn = true;
+              _userLoyaltyPoints = pts;
+            });
+          }
+        } else {
+          if (mounted) setState(() => _isLoggedIn = true);
+        }
+      } else {
+        if (mounted) setState(() => _isLoggedIn = false);
+      }
+    } catch (_) {
+      final token = await TokenManager.getToken();
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = token != null && token.isNotEmpty;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleRedeem(String rewardId, String rewardName, int ptsCost) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('REDEEM REWARD', style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 13)),
+        content: Text('Are you sure you want to redeem "$rewardName" for $ptsCost Loyalty Points?', style: GoogleFonts.poppins(fontSize: 12)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                final res = await ApiClient().dio.post('/storefront/loyalty/rewards/$rewardId/redeem');
+                if (res.statusCode == 200 || res.statusCode == 201) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('🎉 Congratulations! You have redeemed $rewardName.')),
+                  );
+                  _checkAuthAndPoints();
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Redemption failed or reward unavailable.')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryRose),
+            child: const Text('CONFIRM REDEEM'),
+          ),
+        ],
+      ),
+    );
+  }
   String _getMediaUrl(String? path) {
     if (path == null || path.isEmpty) return '';
     if (path.startsWith('http')) return path;
@@ -436,25 +508,70 @@ class _RewardsGalleryScreenState extends ConsumerState<RewardsGalleryScreen> {
                 // Redeem Action Button
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.push('/account'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    child: Text(
-                      'LOGIN TO REDEEM',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2.0,
-                      ),
-                    ),
-                  ),
+                  child: (() {
+                    final requiredPts = int.tryParse(pointCost) ?? 0;
+
+                    if (!_isLoggedIn) {
+                      return ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          ).then((_) => _checkAuthAndPoints());
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                        ),
+                        child: Text(
+                          'LOGIN TO REDEEM',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                      );
+                    } else if (_userLoyaltyPoints >= requiredPts) {
+                      return ElevatedButton(
+                        onPressed: () => _handleRedeem(rewardId, name, requiredPts),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryRose,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                        ),
+                        child: Text(
+                          'REDEEM REWARD ($pointCost PTS)',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                      );
+                    } else {
+                      final diff = requiredPts - _userLoyaltyPoints;
+                      return OutlinedButton(
+                        onPressed: null,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: Colors.black26),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                        ),
+                        child: Text(
+                          'NEED $diff MORE PTS TO REDEEM',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
+                            color: Colors.black45,
+                          ),
+                        ),
+                      );
+                    }
+                  })(),
                 ),
               ],
             ),

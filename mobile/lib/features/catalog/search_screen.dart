@@ -58,6 +58,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final List<String> _selectedFamilies = [];
   final List<String> _selectedConcentrations = [];
 
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMoreProducts = true;
+  int _currentPage = 1;
+
   @override
   void initState() {
     super.initState();
@@ -69,13 +74,57 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (formatted == 'women') _selectedGenders.add('Women');
       if (formatted == 'unisex') _selectedGenders.add('Unisex');
     }
+    _scrollController.addListener(_onScroll);
     _loadProducts();
     _loadCategories();
     _loadBrands();
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 300) {
+      _loadMoreProducts();
+    }
+  }
+
+  Future<void> _loadMoreProducts() async {
+    if (_isFetchingMore || !_hasMoreProducts || _isLoading) return;
+
+    setState(() {
+      _isFetchingMore = true;
+    });
+
+    try {
+      final Map<String, dynamic> params = {
+        'skip': _currentPage * 50,
+        'limit': 50,
+      };
+      if (widget.isFeatured != null) params['is_featured'] = widget.isFeatured;
+      if (widget.isNewArrival != null) params['is_new_arrival'] = widget.isNewArrival;
+
+      final res = await _apiClient.dio.get('/storefront/products', queryParameters: params);
+      final List<dynamic> newItems = res.data as List? ?? [];
+
+      if (newItems.isEmpty) {
+        _hasMoreProducts = false;
+      } else {
+        _currentPage++;
+        _allProducts.addAll(newItems);
+        _applyFilters();
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetchingMore = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -132,7 +181,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
     try {
       final Map<String, dynamic> params = {
-        'limit': 100,
+        'limit': 200,
       };
       if (widget.isFeatured != null) params['is_featured'] = widget.isFeatured;
       if (widget.isNewArrival != null) params['is_new_arrival'] = widget.isNewArrival;
@@ -898,6 +947,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: Stack(
             children: [
               SingleChildScrollView(
+                controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1222,6 +1272,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                         itemCount: _products.length,
                         itemBuilder: (context, index) => ProductCard(product: _products[index] as Map<String, dynamic>),
+                      ),
+                    if (_isFetchingMore)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Center(
+                          child: CircularProgressIndicator(color: AppTheme.primaryRose, strokeWidth: 2.5),
+                        ),
                       ),
                     const SizedBox(height: 32),
                   ],
