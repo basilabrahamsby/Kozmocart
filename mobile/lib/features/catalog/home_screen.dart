@@ -2758,9 +2758,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // ── House Favorites Section (Arches) ───────────────────────
                   _buildHouseFavorites(houseFavorites),
 
-                  // ── Promotional Offers ────────────────────────────────────
-                  if (offers.isNotEmpty)
-                    Container(
+                  // ── Promotional Offers (Matching Storefront Offer Banners) ───────────────
+                  (() {
+                    final displayOffers = offers.isNotEmpty
+                        ? offers
+                        : [
+                            {
+                              'title': 'EXCLUSIVE SIGNATURE PROMO',
+                              'code': 'KOZMO999',
+                              'discount_value': 'FLAT 15% OFF',
+                              'description': 'Enjoy flat discounts across all luxury fragrance collections using code KOZMO999 at checkout.'
+                            }
+                          ];
+
+                    return Container(
                       key: _offersKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2772,52 +2783,124 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: offers.length,
+                            itemCount: displayOffers.length,
                             itemBuilder: (context, index) {
-                              final offer =
-                                  offers[index] as Map<String, dynamic>;
-                              final title = offer['title'] ?? 'Exclusive Deal';
-                              final code = offer['code'] ?? '';
-                              final discountVal = offer['discount_value'] ?? '';
-                              final type = offer['discount_type'] ?? '';
+                              final offer = displayOffers[index] as Map<String, dynamic>;
+                              final title = offer['title']?.toString() ?? 'Exclusive Deal';
+                              final code = offer['code']?.toString() ?? 'KOZMO999';
+                              final discountVal = offer['discount_value']?.toString() ?? 'SPECIAL DEAL';
+                              final desc = offer['description']?.toString() ?? 'Enjoy exclusive promotional discounts on luxury perfumes.';
 
-                              return Card(
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                color: AppTheme.surfaceLight,
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(16),
-                                  title: Text(title.toString().toUpperCase(),
-                                      style: GoogleFonts.montserrat(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 12,
-                                          letterSpacing: 1.0)),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 6.0),
-                                    child: Text(
-                                      type.toString().isNotEmpty
-                                          ? '$type Discount • Code: $code'
-                                          : 'Promo Code: $code',
-                                      style: GoogleFonts.poppins(
-                                          color: AppTheme.textMuted,
-                                          fontSize: 11),
-                                    ),
+                              return Container(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppTheme.primaryRose.withValues(alpha: 0.2)),
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFFFF0F5), Color(0xFFFFE4E6)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                  trailing: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryRose,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      discountVal.toString().isNotEmpty
-                                          ? '$discountVal OFF'
-                                          : 'CLAIM',
-                                      style: GoogleFonts.montserrat(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700),
-                                    ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.primaryRose,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              discountVal.toUpperCase(),
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                                letterSpacing: 1.0,
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(color: AppTheme.primaryRose),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.confirmation_number_outlined, size: 12, color: AppTheme.primaryRose),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  code,
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: AppTheme.primaryRose,
+                                                    letterSpacing: 1.2,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        title.toUpperCase(),
+                                        style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12.5,
+                                          color: Colors.black87,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        desc,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 11,
+                                          color: Colors.black54,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) => const SearchScreen(
+                                                  onSale: true,
+                                                  title: 'OFFERS & PROMOTIONS',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.black,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                          child: Text(
+                                            'CLAIM OFFER & SHOP DEALS',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );
@@ -2825,7 +2908,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ],
                       ),
-                    ),
+                    );
+                  })(),
 
                   // ── Luxury Trust Badges Section ────────────────────────────
                   _buildTrustBadgesSection(apiBadges),
