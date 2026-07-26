@@ -624,10 +624,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  List<Map<String, String>> _getSearchSuggestions(String text) {
-    if (text.isEmpty) return [];
-    final q = text.toLowerCase();
-    final List<Map<String, String>> suggestions = [];
+  List<Map<String, dynamic>> _getSearchSuggestions(String text) {
+    if (text.trim().isEmpty) return [];
+    final q = text.trim().toLowerCase();
+    final List<Map<String, dynamic>> suggestions = [];
 
     // 1. Check matching Brands
     for (final b in _brands) {
@@ -659,10 +659,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     for (final p in _allProducts) {
       if (p is Map) {
         final pName = p['name']?.toString() ?? '';
-        if (pName.toLowerCase().contains(q)) {
+        final bName = p['brand_name']?.toString() ?? p['brand']?['name']?.toString() ?? '';
+        if (pName.toLowerCase().contains(q) || bName.toLowerCase().contains(q)) {
+          String imgUrl = '';
+          final images = p['images'] as List?;
+          if (images != null && images.isNotEmpty) {
+            imgUrl = _getMediaUrl(images[0]['url']?.toString());
+          }
+          final variants = p['variants'] as List?;
+          double price = 0.0;
+          if (variants != null && variants.isNotEmpty) {
+            price = double.tryParse(variants[0]['selling_price']?.toString() ?? '0') ?? 0.0;
+          }
+
           suggestions.add({
             'type': 'Product',
             'value': pName,
+            'brand': bName,
+            'price': price,
+            'imageUrl': imgUrl,
+            'product': p,
           });
         }
       }
@@ -696,12 +712,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       });
     }
 
-    return suggestions.take(8).toList();
+    return suggestions.take(10).toList();
   }
 
-  void _onSuggestionTap(Map<String, String> sug) {
-    final value = sug['value'] ?? '';
-    final type = sug['type'] ?? '';
+  void _onSuggestionTap(Map<String, dynamic> sug) {
+    final value = sug['value']?.toString() ?? '';
+    final type = sug['type']?.toString() ?? '';
+
+    if (type == 'Product' && sug['product'] != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ProductDetailScreen(
+            product: sug['product'] as Map<String, dynamic>,
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _searchController.text = value;
@@ -783,14 +810,47 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   return const SizedBox.shrink();
                 }
                 final sug = suggestions[sugIndex];
-                final value = sug['value'] ?? '';
-                final type = sug['type'] ?? '';
+                final value = sug['value']?.toString() ?? '';
+                final type = sug['type']?.toString() ?? '';
+                final brand = sug['brand']?.toString() ?? '';
+                final price = (sug['price'] as num?)?.toDouble() ?? 0.0;
+                final imageUrl = sug['imageUrl']?.toString() ?? '';
+
+                if (type == 'Product') {
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    leading: Container(
+                      width: 42,
+                      height: 42,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        color: const Color(0xFFF9F9FB),
+                      ),
+                      child: imageUrl.isNotEmpty
+                          ? CachedImage(imageUrl: imageUrl, fit: BoxFit.cover)
+                          : const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.black38),
+                    ),
+                    title: Text(
+                      value,
+                      style: GoogleFonts.montserrat(color: Colors.black87, fontSize: 12.5, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      brand.isNotEmpty ? '$brand • ₹${price.toStringAsFixed(0)}' : '₹${price.toStringAsFixed(0)}',
+                      style: GoogleFonts.poppins(color: AppTheme.primaryRose, fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.black26),
+                    onTap: () => _onSuggestionTap(sug),
+                  );
+                }
 
                 IconData icon;
                 Color iconColor;
                 if (type == 'Brand') {
-                  icon = Icons.domain_outlined;
-                  iconColor = const Color(0xFFE91E63);
+                  icon = Icons.diamond_outlined;
+                  iconColor = const Color(0xFF10B981);
                 } else if (type == 'Category') {
                   icon = Icons.grid_view_outlined;
                   iconColor = const Color(0xFF007AFF);
