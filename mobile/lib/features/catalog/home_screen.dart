@@ -2251,6 +2251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final brands = (data['brands'] as List?) ?? [];
           final rewards = (data['rewards'] as List?) ?? [];
           final houseFavorites = (layout['house_favorites'] as List?) ?? [];
+          final apiBadges = (layout['trust_badges'] as List?) ?? [];
 
           // Between-product ad banners from CMS layout (with web fallbacks)
           final gridAds1Raw = layout['grid_ads_1'];
@@ -2816,7 +2817,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
 
                   // ── Luxury Trust Badges Section ────────────────────────────
-                  _buildTrustBadgesSection(),
+                  _buildTrustBadgesSection(apiBadges),
 
                   // ── Footer ────────────────────────────────────────────────
                   const _HomeFooter(),
@@ -2830,13 +2831,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   );
 }
 
-  Widget _buildTrustBadgesSection() {
-    final badges = [
-      {'icon': Icons.local_shipping_outlined, 'title': 'FREE SHIPPING', 'desc': 'On orders above ₹2999'},
-      {'icon': Icons.verified_outlined, 'title': '100% ORIGINAL', 'desc': 'Direct luxury imports'},
-      {'icon': Icons.card_giftcard_outlined, 'title': 'LUXURY SAMPLES', 'desc': 'Complimentary tester'},
-      {'icon': Icons.lock_outline, 'title': 'SECURE PAYMENTS', 'desc': '256-bit SSL encrypted'},
-    ];
+  Widget _buildTrustBadgesSection([List<dynamic> apiBadges = const []]) {
+    // Icon mapping from admin icon_name string -> Flutter IconData
+    IconData iconFor(String? name) {
+      switch (name) {
+        case 'local_shipping_outlined': return Icons.local_shipping_outlined;
+        case 'verified_outlined':       return Icons.verified_outlined;
+        case 'lock_outline':            return Icons.lock_outline;
+        case 'card_giftcard_outlined':  return Icons.card_giftcard_outlined;
+        case 'replay_outlined':         return Icons.replay_outlined;
+        case 'support_agent':           return Icons.support_agent;
+        case 'emoji_events_outlined':   return Icons.emoji_events_outlined;
+        case 'eco_outlined':            return Icons.eco_outlined;
+        case 'gps_fixed':               return Icons.gps_fixed;
+        case 'track_changes':           return Icons.track_changes;
+        default:                        return Icons.verified_outlined;
+      }
+    }
+
+    // Use API badges if available, otherwise fall back to hardcoded defaults
+    final badges = apiBadges.isNotEmpty
+        ? apiBadges.map((b) {
+            final m = b as Map<String, dynamic>;
+            return {
+              'icon': iconFor(m['icon_name']?.toString()),
+              'title': m['title']?.toString() ?? '',
+              'desc': m['sub']?.toString() ?? '',
+            };
+          }).toList()
+        : [
+            {'icon': Icons.verified_outlined,       'title': '100% AUTHENTIC',  'desc': 'Directly from Brands'},
+            {'icon': Icons.gps_fixed,               'title': 'LIVE TRACKING',   'desc': 'Live Delivery Tracking'},
+            {'icon': Icons.lock_outline,             'title': 'SECURE PAYMENT',  'desc': 'Safe transactions'},
+            {'icon': Icons.local_shipping_outlined,  'title': 'FREE SHIPPING',   'desc': 'On orders above ₹2999'},
+          ];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),

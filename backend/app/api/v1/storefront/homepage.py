@@ -50,7 +50,13 @@ async def get_homepage_data(db: AsyncSession = Depends(get_db)):
                 {"image": "/hero-1.png", "subtitle": "PREMIUM COLLECTION", "title": "The Signature Scent", "desc": "Discover the ultimate expression of refinement and grace.", "cta": "Shop Now"}
             ],
             "split_banners": {"men": "/banner-men.png", "women": "/banner-women.png"},
-            "mid_quote": {"text": "Perfume follows you; it chases you and lingers behind you.", "author": "The Essence of Beauty"}
+            "mid_quote": {"text": "Perfume follows you; it chases you and lingers behind you.", "author": "The Essence of Beauty"},
+            "trust_badges": [
+                {"icon_name": "verified_outlined",      "title": "100% AUTHENTIC",  "sub": "Directly from Brands"},
+                {"icon_name": "gps_fixed",              "title": "LIVE TRACKING",   "sub": "Live Delivery Tracking"},
+                {"icon_name": "lock_outline",           "title": "SECURE PAYMENT",  "sub": "Safe transactions"},
+                {"icon_name": "local_shipping_outlined","title": "FREE SHIPPING",   "sub": "On orders above ₹2999"}
+            ]
         }
 
     # 2. Fetch categories

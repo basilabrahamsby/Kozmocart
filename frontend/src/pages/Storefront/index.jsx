@@ -46,10 +46,10 @@ export default function StorefrontCMS() {
     youtube: '#'
   })
   const [trustBadges, setTrustBadges] = useState([
-    { title: '100% AUTHENTIC', sub: 'Directly from Brands' },
-    { title: 'EASY RETURNS', sub: '7 Days Return Policy' },
-    { title: 'SECURE PAYMENT', sub: 'Safe transactions' },
-    { title: 'FREE SHIPPING', sub: 'On orders above ₹999' }
+    { icon_name: 'verified_outlined', title: '100% AUTHENTIC', sub: 'Directly from Brands' },
+    { icon_name: 'gps_fixed', title: 'LIVE TRACKING', sub: 'Live Delivery Tracking' },
+    { icon_name: 'lock_outline', title: 'SECURE PAYMENT', sub: 'Safe transactions' },
+    { icon_name: 'local_shipping_outlined', title: 'FREE SHIPPING', sub: 'On orders above ₹2999' }
   ])
   const [freeShippingLimit, setFreeShippingLimit] = useState(999)
   const [products, setProducts] = useState([])
@@ -1242,7 +1242,7 @@ export default function StorefrontCMS() {
                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trust Badges Content</span>
                  {trustBadges.map((badge, idx) => (
                     <div key={idx} style={{ background: 'rgba(0,0,0,0.15)', padding: 16, borderRadius: 12, border: '1px solid var(--border)' }}>
-                       <div className="grid-2" style={{ gap: 12 }}>
+                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                           <div className="form-group" style={{ margin: 0 }}>
                              <label className="form-label">Badge Title</label>
                              <input 
@@ -1266,6 +1266,29 @@ export default function StorefrontCMS() {
                                    setTrustBadges(copy)
                                 }} 
                              />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                             <label className="form-label" title="Material icon name for mobile app">Icon Name (Mobile)</label>
+                             <select 
+                                className="input input-sm"
+                                value={badge.icon_name || 'verified_outlined'}
+                                onChange={e => {
+                                   const copy = [...trustBadges]
+                                   copy[idx].icon_name = e.target.value
+                                   setTrustBadges(copy)
+                                }}
+                             >
+                                <option value="verified_outlined">✅ Verified / Authentic</option>
+                                <option value="local_shipping_outlined">🚚 Free Shipping</option>
+                                <option value="lock_outline">🔒 Secure Payment</option>
+                                <option value="replay_outlined">🔄 Easy Returns</option>
+                                <option value="card_giftcard_outlined">🎁 Gift / Sample</option>
+                                <option value="support_agent">🎧 Support</option>
+                                <option value="emoji_events_outlined">🏆 Award / Quality</option>
+                                <option value="eco_outlined">🌿 Eco Friendly</option>
+                                <option value="gps_fixed">📍 Live Tracking</option>
+                                <option value="track_changes">🔄 Track Order</option>
+                             </select>
                           </div>
                        </div>
                     </div>
