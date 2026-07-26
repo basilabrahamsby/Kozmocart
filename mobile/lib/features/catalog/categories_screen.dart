@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_responsive.dart';
 import '../../core/widgets/animated_background.dart';
 import '../../core/widgets/product_card.dart';
+import '../../core/api/api_client.dart';
 import 'homepage_provider.dart';
 import 'search_screen.dart';
 
@@ -18,6 +19,28 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   int _selectedCategoryIndex = 0;
+  List<dynamic> _allCatalogProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFullCatalog();
+  }
+
+  Future<void> _fetchFullCatalog() async {
+    try {
+      final res = await ApiClient().dio.get('/storefront/products');
+      if (res.statusCode == 200 && res.data != null) {
+        final data = res.data;
+        final list = data is List ? data : (data['items'] ?? data['products'] ?? []);
+        if (mounted && list is List && list.isNotEmpty) {
+          setState(() {
+            _allCatalogProducts = list;
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
   final Map<String, List<Map<String, dynamic>>> _curatedSubcategories = {
     'Eau de Parfum (EDP)': [
@@ -102,13 +125,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final homepageData = ref.watch(homepageDataProvider);
     final apiCategories = homepageData.value?['categories'] as List?;
 
-    // Extract all products from homepage data
-    final rawProductsList = [
-      ...?(homepageData.value?['featured_products'] as List?),
-      ...?(homepageData.value?['new_arrivals'] as List?),
-      ...?(homepageData.value?['best_sellers'] as List?),
-      ...?(homepageData.value?['products'] as List?),
-    ];
+    // Extract all products from catalog or fallback to homepage data
+    final rawProductsList = _allCatalogProducts.isNotEmpty
+        ? _allCatalogProducts
+        : [
+            ...?(homepageData.value?['featured_products'] as List?),
+            ...?(homepageData.value?['new_arrivals'] as List?),
+            ...?(homepageData.value?['best_sellers'] as List?),
+            ...?(homepageData.value?['products'] as List?),
+          ];
 
     final Map<String, dynamic> uniqueProductsMap = {};
     for (var p in rawProductsList) {
