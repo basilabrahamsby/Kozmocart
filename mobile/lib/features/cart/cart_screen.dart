@@ -28,6 +28,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   // Track which item is being removed for animation
   String? _removingId;
 
+  String _getMediaUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    final cleanPath = path.startsWith('/') ? path : '/$path';
+    return 'https://kozmocart.com$cleanPath';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -418,12 +425,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   onTap: () => context.go('/product/${item.slug}'),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(2),
-                    child: Image.network(
-                      item.imageUrl,
+                    child: CachedImage(
+                      imageUrl: _getMediaUrl(item.imageUrl),
                       width: 72,
                       height: 88,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      errorWidget: Container(
                         width: 72,
                         height: 88,
                         color: const Color(0xFFF5F5F5),

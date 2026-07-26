@@ -895,294 +895,295 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ),
       body: AnimatedBackground(
         child: SafeArea(
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildTopCategoryNavBar(),
-            // Search Input Header
-            if (widget.categoryId == null && widget.brandId == null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0),
-                child: TextField(
-                  controller: _searchController,
-                  autofocus: widget.autoFocus,
-                  textInputAction: TextInputAction.search,
-                  onChanged: (val) {
-                    setState(() {});
-                  },
-                  onSubmitted: (val) {
-                    setState(() {
-                      _query = val;
-                      _applyFilters();
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search for scent families, notes, or titles...',
-                    prefixIcon: const Icon(Icons.search, color: AppTheme.textMuted),
-                    suffixIcon: _query.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: AppTheme.textMuted),
-                            onPressed: () {
-                              setState(() {
-                                _searchController.clear();
-                                _query = '';
-                                _applyFilters();
-                              });
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: const Color(0xFFF9F9FB),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppTheme.primaryRose),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-
-            Expanded(
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Sorting Trigger Bar
-                      Container(
-              height: 48,
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFF0F0F2), width: 1),
-                ),
-              ),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                children: [
-                  // Sort Trigger Button
-                  InkWell(
-                    onTap: _showSortBottomSheet,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFE5E5EA)),
-                        borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTopCategoryNavBar(),
+                    // Search Input Header
+                    if (widget.categoryId == null && widget.brandId == null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0),
+                        child: TextField(
+                          controller: _searchController,
+                          autofocus: widget.autoFocus,
+                          textInputAction: TextInputAction.search,
+                          onChanged: (val) {
+                            setState(() {});
+                          },
+                          onSubmitted: (val) {
+                            setState(() {
+                              _query = val;
+                              _applyFilters();
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Search for scent families, notes, or titles...',
+                            prefixIcon: const Icon(Icons.search, color: AppTheme.textMuted),
+                            suffixIcon: _query.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, color: AppTheme.textMuted),
+                                    onPressed: () {
+                                      setState(() {
+                                        _searchController.clear();
+                                        _query = '';
+                                        _applyFilters();
+                                      });
+                                    },
+                                  )
+                                : null,
+                            filled: true,
+                            fillColor: const Color(0xFFF9F9FB),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: AppTheme.primaryRose),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+
+                    // Sorting Trigger Bar
+                    Container(
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFF0F0F2), width: 1),
+                        ),
+                      ),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         children: [
-                          const Icon(Icons.swap_vert, size: 14, color: Colors.black87),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Sort: $_selectedSort',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                          // Sort Trigger Button
+                          InkWell(
+                            onTap: _showSortBottomSheet,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFFE5E5EA)),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.swap_vert, size: 14, color: Colors.black87),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Sort: $_selectedSort',
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
 
-            // Breadcrumbs & Item Count block (Compacted to maximize product grid space)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'HOME',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF8E8E93),
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, size: 10, color: Color(0xFF8E8E93)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'SHOP',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF8E8E93),
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      if (activeCategoryName != null) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.chevron_right, size: 10, color: Color(0xFF8E8E93)),
-                        const SizedBox(width: 4),
-                        Text(
-                          activeCategoryName.toUpperCase(),
-                          style: GoogleFonts.montserrat(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryRose,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_products.length} FRAGRANCES MATCH FILTERS',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF8E8E93),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Horizontal Categories Scroll View
-            if (_categories.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 92,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final cat = _categories[index] as Map<String, dynamic>;
-                    final catId = cat['id']?.toString();
-                    final name = cat['name'] ?? '';
-                    final catImg = cat['image_url'] ??
-                        (cat['images'] is List && (cat['images'] as List).isNotEmpty
-                            ? cat['images'][0]
-                            : cat['banner_url']);
-                    final imageResolved = _getMediaUrl(catImg?.toString());
-                    final isSelected = _selectedCategories.contains(name.toString());
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedCategories.clear();
-                          } else {
-                            _selectedCategories.clear();
-                            _selectedCategories.add(name.toString());
-                          }
-                          _applyFilters();
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(2.5),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: isSelected
-                                      ? const [
-                                          Color(0xFFFFB300),
-                                          Color(0xFFE91E63),
-                                          AppTheme.primaryRose
-                                        ]
-                                      : const [
-                                          Color(0xFFE5E5EA),
-                                          Color(0xFFE5E5EA),
-                                        ],
-                                  begin: Alignment.bottomLeft,
-                                  end: Alignment.topRight,
+                    // Breadcrumbs & Item Count block
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'HOME',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF8E8E93),
+                                  letterSpacing: 1.0,
                                 ),
                               ),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white),
-                                child: ClipOval(
-                                  child: SizedBox(
-                                    width: 60,
-                                    height: 60,
-                                    child: CachedImage(
-                                      imageUrl: imageResolved,
-                                      fit: BoxFit.cover,
-                                      errorWidget: Container(
-                                        color: const Color(0xFFF5F5F5),
-                                        child: const Icon(Icons.image_outlined, color: Colors.black12, size: 20),
-                                      ),
-                                    ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.chevron_right, size: 10, color: Color(0xFF8E8E93)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'SHOP',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF8E8E93),
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                              if (activeCategoryName != null) ...[
+                                const SizedBox(width: 4),
+                                const Icon(Icons.chevron_right, size: 10, color: Color(0xFF8E8E93)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  activeCategoryName.toUpperCase(),
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryRose,
+                                    letterSpacing: 1.0,
                                   ),
                                 ),
-                              ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_products.length} FRAGRANCES MATCH FILTERS',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF8E8E93),
+                              letterSpacing: 1.2,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              name.toString().toUpperCase(),
-                              style: GoogleFonts.montserrat(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w700,
-                                color: isSelected ? AppTheme.primaryRose : Colors.black87,
-                                letterSpacing: 0.5,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Horizontal Categories Scroll View
+                    if (_categories.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 92,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _categories.length,
+                          itemBuilder: (context, index) {
+                            final cat = _categories[index] as Map<String, dynamic>;
+                            final name = cat['name'] ?? '';
+                            final catImg = cat['image_url'] ??
+                                (cat['images'] is List && (cat['images'] as List).isNotEmpty
+                                    ? cat['images'][0]
+                                    : cat['banner_url']);
+                            final imageResolved = _getMediaUrl(catImg?.toString());
+                            final isSelected = _selectedCategories.contains(name.toString());
+
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  if (isSelected) {
+                                    _selectedCategories.clear();
+                                  } else {
+                                    _selectedCategories.clear();
+                                    _selectedCategories.add(name.toString());
+                                  }
+                                  _applyFilters();
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(2.5),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: isSelected
+                                              ? const [
+                                                  Color(0xFFFFB300),
+                                                  Color(0xFFE91E63),
+                                                  AppTheme.primaryRose
+                                                ]
+                                              : const [
+                                                  Color(0xFFE5E5EA),
+                                                  Color(0xFFE5E5EA),
+                                                ],
+                                          begin: Alignment.bottomLeft,
+                                          end: Alignment.topRight,
+                                        ),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.white),
+                                        child: ClipOval(
+                                          child: SizedBox(
+                                            width: 60,
+                                            height: 60,
+                                            child: CachedImage(
+                                              imageUrl: imageResolved,
+                                              fit: BoxFit.cover,
+                                              errorWidget: Container(
+                                                color: const Color(0xFFF5F5F5),
+                                                child: const Icon(Icons.image_outlined, color: Colors.black12, size: 20),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      name.toString().toUpperCase(),
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.w700,
+                                        color: isSelected ? AppTheme.primaryRose : Colors.black87,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-            ],
+                    ],
 
-            // Interactive Filter Engine Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: OutlinedButton.icon(
-                onPressed: _showFilterEngineBottomSheet,
-                icon: const Icon(Icons.tune_outlined, size: 14, color: Colors.black87),
-                label: Text(
-                  'INTERACTIVE FILTER ENGINE',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: const BorderSide(color: Colors.black12),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                ),
-              ),
-            ),
-
-            // Products Grid or Loader
-            Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppTheme.primaryRose,
+                    // Interactive Filter Engine Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: OutlinedButton.icon(
+                        onPressed: _showFilterEngineBottomSheet,
+                        icon: const Icon(Icons.tune_outlined, size: 14, color: Colors.black87),
+                        label: Text(
+                          'INTERACTIVE FILTER ENGINE',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: const BorderSide(color: Colors.black12),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
+                          ),
+                        ),
                       ),
-                    )
-                  : _error.isNotEmpty
-                      ? Center(
+                    ),
+
+                    // Products Grid or Loader
+                    if (_isLoading)
+                      const SizedBox(
+                        height: 250,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryRose,
+                          ),
+                        ),
+                      )
+                    else if (_error.isNotEmpty)
+                      SizedBox(
+                        height: 250,
+                        child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -1196,37 +1197,47 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               ),
                             ],
                           ),
-                        )
-                      : _products.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No fragrances found matching filters.',
-                                style: TextStyle(color: AppTheme.textMuted),
-                              ),
-                            )
-                          : GridView.builder(
-                              padding: const EdgeInsets.all(16),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 0.55,
-                              ),
-                              itemCount: _products.length,
-                              itemBuilder: (context, index) => ProductCard(product: _products[index] as Map<String, dynamic>),
-                            ),
+                        ),
+                      )
+                    else if (_products.isEmpty)
+                      const SizedBox(
+                        height: 200,
+                        child: Center(
+                          child: Text(
+                            'No fragrances found matching filters.',
+                            style: TextStyle(color: AppTheme.textMuted),
+                          ),
+                        ),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.55,
+                        ),
+                        itemCount: _products.length,
+                        itemBuilder: (context, index) => ProductCard(product: _products[index] as Map<String, dynamic>),
                       ),
-                    ],
-                  ),
-                  if (_searchController.text.isNotEmpty &&
-                      _searchController.text != _query &&
-                      (_searchController.text.length >= 2 || _getSearchSuggestions(_searchController.text).isNotEmpty))
-                    _buildSuggestionsOverlay(),
-                ],
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+              if (_searchController.text.isNotEmpty &&
+                  _searchController.text != _query &&
+                  (_searchController.text.length >= 2 || _getSearchSuggestions(_searchController.text).isNotEmpty))
+                Positioned(
+                  top: 90,
+                  left: 16,
+                  right: 16,
+                  child: _buildSuggestionsOverlay(),
+                ),
+            ],
+          ),
       ),
     ),
     );

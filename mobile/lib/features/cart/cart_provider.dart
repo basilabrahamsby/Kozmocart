@@ -70,29 +70,32 @@ class CartItem {
       };
 
   factory CartItem.fromLocalJson(Map<String, dynamic> json) {
+    final rawPrice = json['price'] ?? json['selling_price'] ?? json['unit_price'];
+    final parsedPrice = double.tryParse(rawPrice?.toString() ?? '0') ?? 0.0;
     return CartItem(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      price: parsedPrice,
       quantity: int.tryParse(json['quantity']?.toString() ?? '1') ?? 1,
-      imageUrl: json['imageUrl']?.toString() ?? '',
-      variantName: json['variantName']?.toString() ?? '',
-      loyaltyPoints: int.tryParse(json['loyaltyPoints']?.toString() ?? '0') ?? 0,
+      imageUrl: (json['imageUrl'] ?? json['image_url'] ?? json['image'])?.toString() ?? '',
+      variantName: (json['variantName'] ?? json['variant_name'])?.toString() ?? '',
+      loyaltyPoints: int.tryParse((json['loyaltyPoints'] ?? json['loyalty_points'])?.toString() ?? '0') ?? 0,
       slug: json['slug']?.toString() ?? '',
     );
   }
 
   factory CartItem.fromServerJson(Map<String, dynamic> json) {
+    final rawPrice = json['selling_price'] ?? json['unit_price'] ?? json['price'] ?? json['amount'];
+    final parsedPrice = double.tryParse(rawPrice?.toString() ?? '0') ?? 0.0;
     return CartItem(
-      id: (json['variant_id'] ?? json['id'])?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      id: (json['variant_id'] ?? json['id'] ?? json['product_id'])?.toString() ?? '',
+      name: (json['name'] ?? json['title'] ?? json['product_name'])?.toString() ?? '',
+      price: parsedPrice,
       quantity: int.tryParse(json['quantity']?.toString() ?? '1') ?? 1,
-      imageUrl: (json['image_url'] ?? json['imageUrl'])?.toString() ?? '',
-      variantName: (json['variant_name'] ?? json['variantName'])?.toString() ?? '',
-      loyaltyPoints:
-          int.tryParse((json['loyalty_points'] ?? json['loyaltyPoints'])?.toString() ?? '0') ?? 0,
-      slug: json['slug']?.toString() ?? '',
+      imageUrl: (json['image_url'] ?? json['imageUrl'] ?? json['image'])?.toString() ?? '',
+      variantName: (json['variant_name'] ?? json['variantName'] ?? json['size'])?.toString() ?? '',
+      loyaltyPoints: int.tryParse((json['loyalty_points'] ?? json['loyaltyPoints'])?.toString() ?? '0') ?? 0,
+      slug: (json['slug'] ?? json['product_slug'])?.toString() ?? '',
     );
   }
 }
