@@ -778,7 +778,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   );
                 }
 
-                final sug = suggestions[index - 1];
+                final sugIndex = index - 1;
+                if (sugIndex < 0 || sugIndex >= suggestions.length) {
+                  return const SizedBox.shrink();
+                }
+                final sug = suggestions[sugIndex];
                 final value = sug['value'] ?? '';
                 final type = sug['type'] ?? '';
 
@@ -1316,7 +1320,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           childAspectRatio: 0.55,
                         ),
                         itemCount: _products.length,
-                        itemBuilder: (context, index) => ProductCard(product: _products[index] as Map<String, dynamic>),
+                        itemBuilder: (context, index) {
+                          if (index < 0 || index >= _products.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return ProductCard(product: _products[index] as Map<String, dynamic>);
+                        },
                       ),
                     if (_isFetchingMore)
                       const Padding(
