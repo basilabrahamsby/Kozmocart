@@ -542,6 +542,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             setState(() {
                               _selectedAddress = addr;
                               _showNewAddressForm = false;
+                              if (addr['pincode'] != null) {
+                                _verifyShippingFeeForPincode(addr['pincode'].toString());
+                              }
                             });
                             Navigator.of(context).pop();
                           },
