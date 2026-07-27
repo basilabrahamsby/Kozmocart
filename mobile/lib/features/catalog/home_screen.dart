@@ -2333,22 +2333,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   if (heroSlides.isNotEmpty)
                     AspectRatio(
-                      aspectRatio: 3 / 4,
+                      aspectRatio: 16 / 9,
                       child: Stack(
                         children: [
                           PageView.builder(
                             controller: _bannerController,
-                                      onPageChanged: (i) =>
-                                        setState(() => _currentBannerIndex = i),
+                            onPageChanged: (i) =>
+                                setState(() => _currentBannerIndex = i),
                             itemCount: heroSlides.length,
                             itemBuilder: (context, index) {
                               final slide =
                                   heroSlides[index] as Map<String, dynamic>;
                               final imageResolved = _getMediaUrl(
-                                  (slide['image_mobile'] ??
+                                  (slide['banner_url'] ??
+                                          slide['image'] ??
                                           slide['banner_url_mobile'] ??
-                                          slide['banner_url'] ??
-                                          slide['image'])
+                                          slide['image_mobile'])
                                       ?.toString());
                               final title =
                                   slide['title'] ?? 'The Signature Scent';
@@ -2365,10 +2365,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       for (final s in heroSlides) {
                                         if (s is Map) {
                                           allSlideUrls.add(_getMediaUrl(
-                                            (s['image_mobile'] ??
+                                            (s['banner_url'] ??
+                                             s['image'] ??
                                              s['banner_url_mobile'] ??
-                                             s['banner_url'] ??
-                                             s['image'])?.toString()
+                                             s['image_mobile'])?.toString()
                                           ));
                                         }
                                       }
@@ -2388,73 +2388,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
                                   Container(
-                                      color: const Color(0x66000000)),
-                                  SafeArea(
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          24, 16, 24, 24),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            subtitle.toString().toUpperCase(),
-                                            style: GoogleFonts.montserrat(
-                                                color: AppTheme.accentGold,
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: 3.5),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            title.toString().toUpperCase(),
-                                            style: GoogleFonts.playfairDisplay(
-                                                color: Colors.white,
-                                                fontSize: 32,
-                                                fontWeight: FontWeight.normal,
-                                                letterSpacing: 1.5,
-                                                height: 1.1),
-                                          ),
-                                          if (desc.toString().isNotEmpty) ...[
-                                            const SizedBox(height: 8),
-                                            Text(desc.toString(),
-                                                style: GoogleFonts.poppins(
-                                                    color: Colors.white70,
-                                                    fontSize: 11,
-                                                    height: 1.5),
-                                                maxLines: 2,
-                                                overflow:
-                                                    TextOverflow.ellipsis),
-                                          ],
-                                          const SizedBox(height: 16),
-                                          OutlinedButton(
-                                            onPressed: () {
-                                              _handleSlideNavigation(slide);
-                                            },
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: Colors.white,
-                                              side: const BorderSide(
-                                                  color: Colors.white70),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20,
-                                                      vertical: 8),
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          24)),
-                                            ),
-                                            child: Text('SHOP NOW',
-                                                style: GoogleFonts.montserrat(
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w700,
-                                                    letterSpacing: 2.5,
-                                                    color: Colors.white)),
-                                          ),
+                                      color: const Color(0x55000000)),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 12, 16, 16),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.end,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          subtitle.toString().toUpperCase(),
+                                          style: GoogleFonts.montserrat(
+                                              color: AppTheme.accentGold,
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 2.5),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          title.toString().toUpperCase(),
+                                          style: GoogleFonts.playfairDisplay(
+                                              color: Colors.white,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.normal,
+                                              letterSpacing: 1.0,
+                                              height: 1.1),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (desc.toString().isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(desc.toString(),
+                                              style: GoogleFonts.poppins(
+                                                  color: Colors.white70,
+                                                  fontSize: 9.5,
+                                                  height: 1.3),
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis),
                                         ],
-                                      ),
+                                        const SizedBox(height: 8),
+                                        OutlinedButton(
+                                          onPressed: () {
+                                            _handleSlideNavigation(slide);
+                                          },
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            side: const BorderSide(
+                                                color: Colors.white70, width: 0.8),
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 4),
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        16)),
+                                          ),
+                                          child: Text('SHOP NOW',
+                                              style: GoogleFonts.montserrat(
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 1.8,
+                                                  color: Colors.white)),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -2462,13 +2464,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             },
                           ),
                           Positioned(
-                            bottom: 16,
-                            right: 20,
+                            bottom: 12,
+                            right: 16,
                             child: Row(
                               children: List.generate(heroSlides.length, (idx) {
                                 return AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),
-                                  width: _currentBannerIndex == idx ? 20 : 8,
+                                  width: _currentBannerIndex == idx ? 16 : 6,
                                   height: 2,
                                   margin:
                                       const EdgeInsets.symmetric(horizontal: 2),
