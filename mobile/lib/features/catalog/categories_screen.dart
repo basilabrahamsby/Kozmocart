@@ -248,14 +248,34 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
-        title: Text(
-          'CATEGORIES',
-          style: GoogleFonts.montserrat(
-            color: AppTheme.textNeutral,
-            fontSize: R.font(context, 13),
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2.0,
-          ),
+        title: Row(
+          children: [
+            Text(
+              'CATEGORIES',
+              style: GoogleFonts.montserrat(
+                color: AppTheme.textNeutral,
+                fontSize: R.font(context, 13),
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.0,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryRose.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${categoryProducts.length} ITEMS',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryRose,
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -270,52 +290,60 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         ],
       ),
       body: AnimatedBackground(
-        child: Row(
+        child: Column(
           children: [
-            // ── Left Sidebar (Root Categories) ──
+            // ── 1. Top Main Categories Bar (Horizontal Scroll) ──
             Container(
-              width: 105,
-              color: AppTheme.surfaceLight,
+              height: 52,
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 itemCount: categoriesList.length,
                 itemBuilder: (context, index) {
                   final cat = categoriesList[index];
                   final isSelected = index == _selectedCategoryIndex;
+                  final catName = cat['name']?.toString() ?? '';
+                  final catIcon = cat['icon'] as IconData? ?? LucideIcons.layers;
+
                   return GestureDetector(
                     onTap: () {
                       setState(() => _selectedCategoryIndex = index);
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.white : AppTheme.surfaceLight,
-                        border: Border(
-                          left: BorderSide(
-                            color: isSelected ? AppTheme.primaryRose : Colors.transparent,
-                            width: 4,
-                          ),
+                        color: isSelected ? AppTheme.primaryRose : AppTheme.surfaceLight,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? AppTheme.primaryRose : AppTheme.borderLight,
                         ),
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: AppTheme.primaryRose.withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          )
+                        ] : null,
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Row(
                         children: [
                           Icon(
-                            cat['icon'] as IconData? ?? LucideIcons.layers,
-                            size: 20,
-                            color: isSelected ? AppTheme.primaryRose : AppTheme.textMuted,
+                            catIcon,
+                            size: 15,
+                            color: isSelected ? Colors.white : AppTheme.textMuted,
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            cat['name']?.toString() ?? '',
-                            textAlign: TextAlign.center,
+                            catName,
                             style: GoogleFonts.montserrat(
-                              fontSize: 10,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? AppTheme.primaryRose : AppTheme.textNeutral,
+                              fontSize: 11,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? Colors.white : AppTheme.textNeutral,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -325,7 +353,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               ),
             ),
 
-            // ── Right Main Grid (Subcategories & Live Products) ──
+            const Divider(height: 1, color: AppTheme.borderLight),
+
+            // ── 2. Full-Width Product Grid Area (Maximum Screen Space) ──
             Expanded(
               child: Container(
                 color: Colors.white,
@@ -333,107 +363,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                   controller: _scrollController,
                   key: ValueKey(_selectedCategoryIndex),
                   slivers: [
-                    // Promotional Header Banner
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => SearchScreen(
-                                  categoryId: selectedCat['id']?.toString(),
-                                  title: selectedCat['name']?.toString(),
-                                ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFFFF0F5), Color(0xFFFFE4E6)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.primaryRose.withValues(alpha: 0.2)),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        selectedCat['name']?.toString().toUpperCase() ?? '',
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryRose,
-                                          letterSpacing: 1.2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'EXPLORE ALL PRODUCTS (${categoryProducts.length})',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppTheme.textNeutral,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(LucideIcons.chevronRight, size: 18, color: AppTheme.primaryRose),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-
-
-                    // Live Products Section Title
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 6),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'FEATURED PRODUCTS',
-                              style: GoogleFonts.montserrat(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                            Text(
-                              '${categoryProducts.length} ITEMS',
-                              style: GoogleFonts.poppins(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryRose,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Live Product Cards Grid
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       sliver: SliverGrid(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           childAspectRatio: 0.67,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 12,
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
