@@ -2264,6 +2264,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final houseFavorites = (layout['house_favorites'] as List?) ?? [];
           final apiBadges = (layout['trust_badges'] as List?) ?? [];
 
+          // Pre-cache hero slides for instant first-time image rendering
+          if (heroSlides.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                for (final slide in heroSlides.take(4)) {
+                  if (slide is Map) {
+                    final raw = (slide['banner_url'] ?? slide['image'] ?? slide['banner_url_mobile'] ?? slide['image_mobile'])?.toString();
+                    if (raw != null && raw.isNotEmpty) {
+                      final url = _getMediaUrl(raw);
+                      if (url.isNotEmpty) {
+                        precacheImage(NetworkImage(url), context);
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          }
+
           // Between-product ad banners from CMS layout (with web fallbacks)
           final gridAds1Raw = layout['grid_ads_1'];
           final List<dynamic> gridAds1 = gridAds1Raw is List ? gridAds1Raw : [];

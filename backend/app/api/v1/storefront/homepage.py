@@ -24,13 +24,28 @@ router = APIRouter(prefix="/homepage", tags=["Storefront Homepage"])
 class OfferWithProductsOut(OfferOut):
     products: List[ProductOut] = []
 
+import time
+
+_HOMEPAGE_MEM_CACHE = None
+_HOMEPAGE_CACHE_TIME = 0.0
+
 @router.get("")
 async def get_homepage_data(db: AsyncSession = Depends(get_db)):
     """Consolidated endpoint fetching all homepage layouts and product curation data en-masse."""
+    global _HOMEPAGE_MEM_CACHE, _HOMEPAGE_CACHE_TIME
+    now_ts = time.time()
+    
+    # 1. Fast Memory Cache (30s TTL)
+    if _HOMEPAGE_MEM_CACHE and (now_ts - _HOMEPAGE_CACHE_TIME < 30):
+        return _HOMEPAGE_MEM_CACHE
+
     try:
         cached = await redis_service.redis.get("storefront:homepage")
         if cached:
-            return json.loads(cached)
+            parsed = json.loads(cached)
+            _HOMEPAGE_MEM_CACHE = parsed
+            _HOMEPAGE_CACHE_TIME = now_ts
+            return parsed
     except Exception:
         pass
     
