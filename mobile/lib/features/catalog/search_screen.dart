@@ -664,7 +664,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           String imgUrl = '';
           final images = p['images'] as List?;
           if (images != null && images.isNotEmpty) {
-            imgUrl = _getMediaUrl(images[0]['url']?.toString());
+            final firstImg = images[0];
+            final rawPath = firstImg is Map 
+                ? (firstImg['url'] ?? firstImg['image_url'] ?? firstImg['image'])?.toString() 
+                : firstImg?.toString();
+            imgUrl = _getMediaUrl(rawPath);
           }
           final variants = p['variants'] as List?;
           double price = 0.0;
