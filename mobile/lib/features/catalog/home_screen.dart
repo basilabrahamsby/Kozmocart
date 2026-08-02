@@ -1792,11 +1792,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ? (((mrp - sellingPrice) / mrp) * 100).round()
             : 0;
 
+        String extractUrlStr(dynamic e) {
+          if (e == null) return '';
+          if (e is String) return e;
+          if (e is Map) {
+            return (e['url'] ?? e['image_url'] ?? e['image'] ?? e['src'])?.toString() ?? '';
+          }
+          return e.toString();
+        }
+
         final imagesList = product['images'] as List?;
-        final mainImg = (imagesList != null && imagesList.isNotEmpty)
-            ? imagesList[0].toString()
-            : '';
-        final resolvedImg = _getMediaUrl(mainImg);
+        final mainImgRaw = (imagesList != null && imagesList.isNotEmpty)
+            ? extractUrlStr(imagesList[0])
+            : extractUrlStr(product['image_url'] ?? product['image'] ?? '');
+        final resolvedImg = _getMediaUrl(mainImgRaw);
 
         final ratingMeta = _getProductRating(id);
         final notes = _getScentNotes(product);
@@ -1817,7 +1826,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'scent_notes': notes,
           'rating': ratingMeta['rating'],
           'reviews': ratingMeta['reviews'],
-          'images': imagesList?.map((e) => _getMediaUrl(e.toString())).toList() ??
+          'images': imagesList?.map((e) => _getMediaUrl(extractUrlStr(e))).toList() ??
               [resolvedImg],
         };
 
