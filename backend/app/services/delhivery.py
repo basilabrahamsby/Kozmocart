@@ -443,6 +443,68 @@ async def fetch_delhivery_packing_slip(waybill: str) -> Optional[Dict[str, Any]]
         logger.error(f"Failed to fetch Delhivery packing slip: {e}")
     return None
 
+
+async def request_delhivery_pickup(pickup_date: Optional[str] = None, pickup_time: str = "09:00:00", package_count: int = 1) -> Dict[str, Any]:
+    """
+    Requests a pickup from Delhivery courier for the specified date & time slot.
+    If pickup_date is not specified, it automatically defaults to Tomorrow's date ('YYYY-MM-DD').
+    Default pickup_time is '09:00:00' (First Morning Slot: 9:00 AM - 12:00 PM).
+    """
+    from datetime import datetime, timedelta
+    
+    if not pickup_date:
+        next_day = datetime.now() + timedelta(days=1)
+        pickup_date = next_day.strftime("%Y-%m-%d")
+
+    config = await get_delhivery_config()
+    api_token = config["api_token"]
+    sandbox = config["sandbox"]
+    pickup_location = config["pickup_location"]
+
+    if api_token == "placeholder_delhivery_token":
+        return {
+            "success": True,
+            "pickup_id": "MOCK_PICKUP_9812",
+            "pickup_date": pickup_date,
+            "pickup_time": pickup_time,
+            "message": f"Mock pickup scheduled for {pickup_date} at first slot ({pickup_time})"
+        }
+
+    url = f"{get_base_url(sandbox)}/fm/request/new/"
+    headers = get_headers(api_token)
+    payload = {
+        "pickup_location": pickup_location,
+        "pickup_date": pickup_date,
+        "pickup_time": pickup_time,
+        "expected_package_count": package_count
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post(url, headers=headers, json=payload, timeout=12.0)
+            if res.status_code in (200, 201):
+                data = res.json()
+                return {
+                    "success": True,
+                    "pickup_id": data.get("pickup_id") or data.get("id"),
+                    "pickup_date": pickup_date,
+                    "pickup_time": pickup_time,
+                    "message": "Delhivery pickup scheduled successfully"
+                }
+            else:
+                logger.error(f"Delhivery pickup request error {res.status_code}: {res.text}")
+                return {
+                    "success": False,
+                    "message": f"Delhivery API error {res.status_code}: {res.text}"
+                }
+    except Exception as e:
+        logger.error(f"Delhivery pickup scheduling failed: {str(e)}")
+
+    return {
+        "success": False,
+        "message": "Failed to schedule Delhivery pickup"
+    }
+
 def generate_delhivery_label_html(order, pkg: Optional[Dict[str, Any]] = None) -> str:
     # Extracted fields from packing slip or order
     waybill = pkg.get("wbn") if (pkg and pkg.get("wbn")) else (order.tracking_number or "27438910005456")
