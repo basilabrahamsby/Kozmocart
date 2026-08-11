@@ -53,7 +53,9 @@ async def delhivery_status_polling_loop():
                         
                         mapped_status = None
                         
-                        if "delivered" in status_combined or status_raw == "dl":
+                        if any(kw in status_combined for kw in ["rto", "returned", "return", "undelivered", "rejected", "refused", "rtn"]):
+                            mapped_status = OrderStatus.returned
+                        elif "delivered" in status_combined or status_raw in ["dl", "delivered"]:
                             mapped_status = OrderStatus.delivered
                         elif "out for delivery" in status_combined or "ofd" in status_combined:
                             mapped_status = OrderStatus.out_for_delivery

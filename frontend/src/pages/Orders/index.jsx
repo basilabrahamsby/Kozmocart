@@ -892,10 +892,17 @@ function OrderModal({ onClose, onSaved, customers, variants }) {
 }
 
 const STATUS_COLORS = {
-  pending: 'var(--warning)', confirmed: 'var(--info)', processing: 'var(--info)',
-  packed: 'var(--gold)', shipped: 'var(--gold)', out_for_delivery: 'var(--gold-bright)',
-  delivered: 'var(--success)', completed: 'var(--success)',
-  cancelled: 'var(--error)', return_requested: 'var(--error)', returned: 'var(--error)',
+  pending: '#f59e0b',
+  confirmed: '#3b82f6',
+  processing: '#06b6d4',
+  packed: '#d97706',
+  shipped: '#a855f7',
+  out_for_delivery: '#8b5cf6',
+  delivered: '#10b981',
+  completed: '#059669',
+  cancelled: '#ef4444',
+  return_requested: '#f97316',
+  returned: '#dc2626'
 }
 const ALL_STATUSES = ['pending', 'confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'completed', 'cancelled', 'returned']
 
@@ -1599,16 +1606,30 @@ export default function Orders() {
                         }}
                       />
                     </td>
-                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '0.8rem' }}>{o.order_number}</span></td>
+                    <td>
+                      <div style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '0.8rem' }}>{o.order_number}</div>
+                      {o.tracking_number && (
+                        <div style={{ fontSize: '0.62rem', color: 'var(--gold)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          📦 AWB: {o.tracking_number}
+                        </div>
+                      )}
+                    </td>
                     <td>{o.customer_name || <span style={{ color: 'var(--text-muted)' }}>Walk-in</span>}</td>
                     <td><span className="badge badge-neutral" style={{ textTransform: 'capitalize' }}>{o.channel}</span></td>
                     <td>{o.items?.length || 0} item{o.items?.length !== 1 ? 's' : ''}</td>
                     <td style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>{fmt(o.total_amount)}</td>
                     <td><span className="badge badge-neutral" style={{ textTransform: 'capitalize' }}>{o.payment_method || '—'}</span></td>
                     <td>
-                      <span className="badge" style={{ background: STATUS_COLORS[o.status] + '22', color: STATUS_COLORS[o.status] }}>
-                        {o.status.replace(/_/g, ' ')}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                        <span className="badge" style={{ background: (STATUS_COLORS[o.status] || '#888') + '22', color: STATUS_COLORS[o.status] || '#888', fontWeight: 700 }}>
+                          {o.status.replace(/_/g, ' ')}
+                        </span>
+                        {o.tracking_number && (
+                          <span style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: 4, background: o.status === 'returned' ? 'rgba(239,68,68,0.2)' : o.status === 'delivered' ? 'rgba(16,185,129,0.2)' : 'rgba(201,168,76,0.12)', color: o.status === 'returned' ? '#f87171' : o.status === 'delivered' ? '#34d399' : 'var(--gold-bright)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            {o.status === 'returned' ? '🔴 Delhivery: Returned (RTO)' : o.status === 'delivered' ? '🟢 Delhivery: Delivered' : o.status === 'shipped' ? '🚀 Delhivery: In Transit' : o.status === 'out_for_delivery' ? '🛵 Delhivery: Out for Delivery' : `🚀 Delhivery: ${o.status}`}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
                     <td onClick={e => e.stopPropagation()}>
