@@ -588,16 +588,22 @@ async def get_kpis_report(
     actual_clicks = total_successful_orders * 5 + total_customers * 3
     ad_conversions = (total_successful_orders / actual_clicks * 100) if actual_clicks > 0 else 0.0
     
-    # 5. Compute GST Collected & Ledger
+    # 5. Compute GST Collected & Ledger (18% Inclusive GST calculation)
     cgst_collected = 0.0
     sgst_collected = 0.0
     igst_collected = 0.0
-    
+
     for o in all_orders:
+        subtotal = float(o.subtotal or 0.0)
         tax = float(o.tax_amount or 0.0)
+        if tax <= 0 and subtotal > 0:
+            # 18% Inclusive GST Tax Formula: subtotal - (subtotal / 1.18)
+            tax = subtotal - (subtotal / 1.18)
+
         addr = o.shipping_address or {}
         state = str(addr.get("state", "")).strip().lower()
-        if state == "maharashtra" or not state:
+        is_kerala = "kerala" in state or " kl" in state or "32" in state or not state
+        if is_kerala:
             cgst_collected += 0.5 * tax
             sgst_collected += 0.5 * tax
         else:
@@ -609,8 +615,7 @@ async def get_kpis_report(
     stmt_gstr = (
         select(
             func.date_trunc('month', Order.created_at).label("month"),
-            func.sum(Order.subtotal).label("taxable_value"),
-            func.sum(Order.tax_amount).label("total_gst")
+            func.sum(Order.subtotal).label("gross_subtotal")
         )
         .where(Order.status.notin_([OrderStatus.cancelled, OrderStatus.returned]))
         .group_by(text("month"))
@@ -618,28 +623,36 @@ async def get_kpis_report(
     )
     res_gstr = await db.execute(stmt_gstr)
     gstr_rows = res_gstr.all()
-    
+
     gstr1_ledger = []
     for r in gstr_rows:
         month_dt = r[0]
-        taxable_value = float(r[1] or 0.0)
-        total_gst = float(r[2] or 0.0)
-        
-        # Split CGST/SGST/IGST specifically for this month
+        gross_subtotal = float(r[1] or 0.0)
+
+        # 18% Inclusive GST Breakdown for the month
+        taxable_value = gross_subtotal / 1.18 if gross_subtotal > 0 else 0.0
+        total_gst_month = gross_subtotal - taxable_value
+
+        # Split CGST/SGST/IGST specifically for this month's orders
         m_cgst = 0.0
         m_sgst = 0.0
         m_igst = 0.0
         for o in all_orders:
             if o.created_at.year == month_dt.year and o.created_at.month == month_dt.month:
-                tax = float(o.tax_amount or 0.0)
+                o_subtotal = float(o.subtotal or 0.0)
+                o_tax = float(o.tax_amount or 0.0)
+                if o_tax <= 0 and o_subtotal > 0:
+                    o_tax = o_subtotal - (o_subtotal / 1.18)
+
                 addr = o.shipping_address or {}
                 state = str(addr.get("state", "")).strip().lower()
-                if state == "maharashtra" or not state:
-                    m_cgst += 0.5 * tax
-                    m_sgst += 0.5 * tax
+                is_kerala = "kerala" in state or " kl" in state or "32" in state or not state
+                if is_kerala:
+                    m_cgst += 0.5 * o_tax
+                    m_sgst += 0.5 * o_tax
                 else:
-                    m_igst += tax
-                    
+                    m_igst += o_tax
+
         gstr1_ledger.append(GSTR1LedgerRow(
             month=month_dt.strftime("%B %Y"),
             taxable_value=round(taxable_value, 2),
@@ -647,7 +660,7 @@ async def get_kpis_report(
             cgst=round(m_cgst, 2),
             sgst=round(m_sgst, 2),
             igst=round(m_igst, 2),
-            total_gst=round(total_gst, 2)
+            total_gst=round(total_gst_month, 2)
         ))
 
     # 6. Sales Pipeline stages - 100% Dynamic database-driven funnel
