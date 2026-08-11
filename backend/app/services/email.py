@@ -15,9 +15,10 @@ def send_smtp_email(
     body_html: str,
     body_text: str = None,
     attachment_bytes: Optional[bytes] = None,
-    attachment_filename: Optional[str] = None
+    attachment_filename: Optional[str] = None,
+    attachments: Optional[List[Dict[str, Any]]] = None
 ) -> bool:
-    """Sends an email using standard SMTP configurations in settings, with optional file attachment."""
+    """Sends an email using standard SMTP configurations in settings, with optional single or multiple file attachments."""
     if not settings.SMTP_HOST or not settings.SMTP_USER:
         print("SMTP settings are not configured. Skipping email transmission.")
         return False
@@ -34,12 +35,23 @@ def send_smtp_email(
     alt_part.attach(MIMEText(body_html, 'html', 'utf-8'))
     msg.attach(alt_part)
 
-    # File attachment
+    # Single file attachment
     if attachment_bytes and attachment_filename:
         from email.mime.application import MIMEApplication
         part = MIMEApplication(attachment_bytes, Name=attachment_filename)
         part['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
         msg.attach(part)
+
+    # Multiple file attachments list
+    if attachments:
+        from email.mime.application import MIMEApplication
+        for att in attachments:
+            b = att.get("bytes")
+            fname = att.get("filename")
+            if b and fname:
+                part = MIMEApplication(b, Name=fname)
+                part['Content-Disposition'] = f'attachment; filename="{fname}"'
+                msg.attach(part)
 
     try:
         if settings.SMTP_SSL:
@@ -1052,6 +1064,151 @@ def generate_invoice_pdf(order, company_details: Optional[Dict[str, Any]] = None
     return buffer
 
 
+def generate_shipping_label_pdf(order, company_details: Optional[Dict[str, Any]] = None):
+    """Generates a compact printable PDF shipping/delivery label for an order."""
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.units import inch
+
+    if not company_details:
+        company_details = {
+            "companyName": "KOZMOCART COMMODITIES PRIVATE LIMITED",
+            "registeredAddress": "71/826, B.T.S RRA-283, BTS Road, Keerthi Nagar, Elamakkara P.O, Kochi, Kerala - 682026",
+            "phone": "1800 890 2621",
+            "email": "info@kozmocart.com"
+        }
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40
+    )
+
+    styles = getSampleStyleSheet()
+
+    body_style = ParagraphStyle('LabelBody', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=13, textColor=colors.HexColor('#1A1A1A'))
+    bold_style = ParagraphStyle('LabelBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, leading=13, textColor=colors.HexColor('#000000'))
+    header_style = ParagraphStyle('LabelHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=14, leading=16, textColor=colors.HexColor('#000000'))
+    sub_header_style = ParagraphStyle('LabelSubHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, leading=11, textColor=colors.HexColor('#D2168D'))
+    badge_cod_style = ParagraphStyle('BadgeCod', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=13, leading=15, textColor=colors.HexColor('#B91C1C'), alignment=1)
+    badge_prepaid_style = ParagraphStyle('BadgePrepaid', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=13, leading=15, textColor=colors.HexColor('#059669'), alignment=1)
+
+    story = []
+
+    # Title & Payment Badge Box
+    pm = (order.payment_method.value if hasattr(order.payment_method, 'value') else str(order.payment_method)).upper() if order.payment_method else "COD"
+    is_cod = "COD" in pm
+    tot_val = float(order.total_amount or 0)
+
+    if is_cod:
+        badge_text = f"<b>COD: ₹{tot_val:,.2f}</b><br/><font size=7 color='#666'>Collect Cash on Delivery</font>"
+        badge_para = Paragraph(badge_text, badge_cod_style)
+    else:
+        badge_text = f"<b>PREPAID — DO NOT COLLECT CASH</b><br/><font size=7 color='#059669'>Paid Online ({pm})</font>"
+        badge_para = Paragraph(badge_text, badge_prepaid_style)
+
+    left_header = Paragraph("<b>KOZMOCART</b><br/><font size=8 color='#555'>OFFICIAL DELIVERY LABEL</font>", header_style)
+    
+    header_table = Table([[left_header, badge_para]], colWidths=[3.5*inch, 3.5*inch])
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor('#000000')),
+        ('BACKGROUND', (0,0), (0,0), colors.HexColor('#FAF8F5')),
+        ('BACKGROUND', (1,0), (1,0), colors.HexColor('#FEF2F2') if is_cod else colors.HexColor('#ECFDF5')),
+        ('PADDING', (0,0), (-1,-1), 10),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 10))
+
+    # Order No Barcode Box
+    order_bar_text = f"<b>ORDER NO: {order.order_number}</b> &nbsp;|&nbsp; <b>DATE:</b> {(order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A')}"
+    order_table = Table([[Paragraph(order_bar_text, ParagraphStyle('OrdBar', parent=bold_style, fontSize=11, leading=14, alignment=1))]], colWidths=[7.0*inch])
+    order_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F3F4F6')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#000000')),
+        ('PADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(order_table)
+    story.append(Spacer(1, 10))
+
+    # Deliver To vs Return To Grid
+    shipping_address_str = "No shipping address provided"
+    if order.shipping_address:
+        sa = order.shipping_address
+        if isinstance(sa, dict):
+            parts = [sa.get("address_line1"), sa.get("address_line2"), sa.get("city"), sa.get("state")]
+            parts = [p.strip() for p in parts if p and p.strip()]
+            addr_base = ", ".join(parts)
+            pincode = sa.get("pincode")
+            shipping_address_str = sa.get("full_address") or (f"{addr_base} - {pincode}" if pincode else addr_base)
+        else:
+            shipping_address_str = str(sa)
+
+    ship_to_text = f"<b>DELIVER TO (RECIPIENT):</b><br/>"
+    ship_to_text += f"<font size=11><b>{order.customer_name}</b></font><br/>"
+    ship_to_text += f"{shipping_address_str}<br/>"
+    ship_to_text += f"<b>Phone:</b> {order.customer_phone or 'N/A'}<br/>"
+    ship_to_text += f"<b>Email:</b> {order.customer_email or 'N/A'}"
+    ship_to_para = Paragraph(ship_to_text, body_style)
+
+    ship_from_text = f"<b>RETURN IF UNDELIVERED TO (SENDER):</b><br/>"
+    ship_from_text += f"<b>{company_details['companyName']}</b><br/>"
+    ship_from_text += f"{company_details['registeredAddress']}<br/>"
+    ship_from_text += f"<b>Support:</b> {company_details['email']} | {company_details['phone']}"
+    ship_from_para = Paragraph(ship_from_text, ParagraphStyle('ShipFromText', parent=body_style, fontSize=8, leading=11, textColor=colors.HexColor('#444444')))
+
+    address_grid = Table([[ship_to_para, ship_from_para]], colWidths=[4.2*inch, 2.8*inch])
+    address_grid.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor('#000000')),
+        ('INNERGRID', (0,0), (-1,-1), 1, colors.HexColor('#CCCCCC')),
+        ('PADDING', (0,0), (-1,-1), 10),
+    ]))
+    story.append(address_grid)
+    story.append(Spacer(1, 10))
+
+    # Items Summary Table
+    item_rows = [[Paragraph("ITEM DESCRIPTION", sub_header_style), Paragraph("QTY", ParagraphStyle('QtyTh', parent=sub_header_style, alignment=1))]]
+    for item in order.items:
+        size_str = f" ({item.size_ml}ml)" if item.size_ml else ""
+        item_rows.append([
+            Paragraph(f"{item.product_name}{size_str}", body_style),
+            Paragraph(str(item.quantity), ParagraphStyle('QtyTd', parent=bold_style, alignment=1))
+        ])
+
+    items_table = Table(item_rows, colWidths=[5.8*inch, 1.2*inch])
+    items_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F3F4F6')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#000000')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#EAE6DF')),
+        ('PADDING', (0,0), (-1,-1), 6),
+    ]))
+    story.append(items_table)
+    story.append(Spacer(1, 10))
+
+    # Fragile Warning Banner
+    fragile_text = "<b>FRAGILE ITEM — HANDLE WITH CARE</b> &nbsp;|&nbsp; <i>Luxury Fragrance Glass Bottle Packaging. Do not drop or stack heavy items on top.</i>"
+    fragile_para = Paragraph(fragile_text, ParagraphStyle('FragileText', parent=body_style, fontSize=8, leading=10, alignment=1, textColor=colors.HexColor('#B91C1C')))
+    fragile_table = Table([[fragile_para]], colWidths=[7.0*inch])
+    fragile_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#FEF2F2')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#B91C1C')),
+        ('PADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(fragile_table)
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+
 class InvoiceOrderWrapper:
     def __init__(self, data: Dict[str, Any], items: List[Dict[str, Any]]):
         self.order_number = data.get("order_number")
@@ -1100,7 +1257,7 @@ def send_admin_invoice_email(
     coupon_code: str = "",
     gift_message: str = "",
 ) -> bool:
-    subject = f"[INVOICE/ORDER] {order_number} - New Order Details"
+    subject = f"[INVOICE & LABEL/ORDER] {order_number} - New Order Details"
     body_text = f"New Order Details for {order_number}. Customer: {customer_name}. Total: ₹{total:,.2f}"
 
     coupon_row = f'<p style="margin:8px 0 0;font-size:12px;color:#666;">Coupon Applied: <strong style="color:#D2168D;">{coupon_code}</strong></p>' if coupon_code else ""
@@ -1112,8 +1269,9 @@ def send_admin_invoice_email(
     address_html = _address_block(shipping_address)
 
     content = f"""
-    <p style="margin:0 0 6px;font-size:9px;font-weight:700;letter-spacing:0.2em;color:#0A0A0A;text-transform:uppercase;">Company Order Invoice Copy</p>
+    <p style="margin:0 0 6px;font-size:9px;font-weight:700;letter-spacing:0.2em;color:#0A0A0A;text-transform:uppercase;">Company Order Copy & Shipping Label</p>
     <h2 style="margin:0 0 8px;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#1A1A1A;">New Order Received — {order_number}</h2>
+    <p style="margin:0 0 16px;font-size:12px;color:#555;">Attached to this email are the printable <strong>Tax Invoice PDF</strong> and <strong>Delivery Label PDF</strong> for quick packing and dispatch.</p>
     
     <div style="background:#FAF8F5;border:1px solid #EAE6DF;border-radius:3px;padding:16px 20px;margin:20px 0;">
       <table width="100%" cellpadding="0" cellspacing="0">
@@ -1141,37 +1299,50 @@ def send_admin_invoice_email(
 
     html = _base_template(f"New Order — {order_number}", "Order Management System", content)
     
-    # Compile PDF attachment
-    pdf_bytes = None
+    attachments_list = []
+    order_data = {
+        "order_number": order_number,
+        "created_at": datetime.now(),
+        "payment_method": payment_method,
+        "payment_status": "PAID" if payment_method.lower() in ("card", "upi", "razorpay") else "PENDING",
+        "shipping_address": shipping_address,
+        "customer_name": customer_name,
+        "customer_phone": customer_phone,
+        "customer_email": customer_email,
+        "discount_amount": discount,
+        "shipping_amount": shipping,
+        "tax_amount": tax,
+        "subtotal": subtotal,
+        "total_amount": total
+    }
+    wrapper = InvoiceOrderWrapper(order_data, items)
+
+    # 1. Tax Invoice PDF
     try:
-        order_data = {
-            "order_number": order_number,
-            "created_at": datetime.now(),
-            "payment_method": payment_method,
-            "payment_status": "PAID" if payment_method.lower() in ("card", "upi", "razorpay") else "PENDING",
-            "shipping_address": shipping_address,
-            "customer_name": customer_name,
-            "customer_phone": customer_phone,
-            "customer_email": customer_email,
-            "discount_amount": discount,
-            "shipping_amount": shipping,
-            "tax_amount": tax,
-            "subtotal": subtotal,
-            "total_amount": total
-        }
-        wrapper = InvoiceOrderWrapper(order_data, items)
         pdf_buffer = generate_invoice_pdf(wrapper)
-        pdf_bytes = pdf_buffer.getvalue()
+        attachments_list.append({
+            "bytes": pdf_buffer.getvalue(),
+            "filename": f"invoice_{order_number}.pdf"
+        })
     except Exception as e:
-        print(f"Failed to generate PDF for admin email: {e}")
+        print(f"Failed to generate Tax Invoice PDF for admin email: {e}")
+
+    # 2. Delivery / Shipping Label PDF
+    try:
+        label_buffer = generate_shipping_label_pdf(wrapper)
+        attachments_list.append({
+            "bytes": label_buffer.getvalue(),
+            "filename": f"shipping_label_{order_number}.pdf"
+        })
+    except Exception as e:
+        print(f"Failed to generate Delivery Label PDF for admin email: {e}")
 
     return send_smtp_email(
         "info@kozmocart.com", 
         subject, 
         html, 
         body_text,
-        attachment_bytes=pdf_bytes,
-        attachment_filename=f"invoice_{order_number}.pdf"
+        attachments=attachments_list
     )
 
 
