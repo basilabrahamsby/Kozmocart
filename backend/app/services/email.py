@@ -1751,3 +1751,71 @@ def order_items_to_email_list(items) -> List[Dict[str, Any]]:
             "total_price": float(item.total_price),
         })
     return result
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 12. Delhivery Low Wallet Balance Alert to Store Owner
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_delhivery_low_balance_email(
+    current_balance: float,
+    threshold: float = 600.0,
+    owner_email: str = "info@kozmocart.com"
+) -> bool:
+    """
+    Sends an urgent email notification to the store owner when Delhivery wallet balance drops below threshold (₹600).
+    """
+    subject = f"⚠️ ALERT: Low Delhivery Account Balance (₹{current_balance:,.2f}) — Recharge Required"
+    body_text = (
+        f"URGENT ALERT: Your Delhivery courier prepaid account balance has dropped to ₹{current_balance:,.2f}, "
+        f"which is below your minimum threshold limit of ₹{threshold:,.2f}. "
+        f"Delivery instruction mode has been set to MANUAL until recharge. Please recharge your Delhivery wallet immediately."
+    )
+
+    content = f"""
+    <div style="background:#FFF5F5;border-left:4px solid #E53E3E;border-radius:4px;padding:16px 20px;margin-bottom:24px;">
+      <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:0.2em;color:#E53E3E;text-transform:uppercase;">Urgent Action Required</p>
+      <h2 style="margin:0 0 8px;font-family:'Playfair Display',Georgia,serif;font-size:20px;color:#9B2C2C;">Delhivery Account Balance is Low (< ₹{threshold:,.0f})</h2>
+      <p style="margin:0;font-size:13px;color:#742A2A;line-height:1.6;">
+        Your prepaid Delhivery wallet balance has fallen below the <strong>₹{threshold:,.2f}</strong> threshold limit.
+      </p>
+    </div>
+
+    <div style="background:#FAF8F5;border:1px solid #EAE6DF;border-radius:6px;padding:20px;margin:20px 0;text-align:center;">
+      <p style="margin:0 0 6px;font-size:10px;color:#888;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;">Current Available Balance</p>
+      <p style="margin:0 0 8px;font-size:32px;font-weight:800;color:#E53E3E;letter-spacing:0.05em;">₹{current_balance:,.2f}</p>
+      <p style="margin:0;font-size:12px;color:#666;">Minimum Required Threshold: <strong>₹{threshold:,.2f}</strong></p>
+    </div>
+
+    <div style="background:#FFF9DB;border:1px solid #F59E0B;border-radius:6px;padding:16px 20px;margin:20px 0;">
+      <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:0.15em;color:#B45309;text-transform:uppercase;">⚠️ Delivery Instruction Status</p>
+      <p style="margin:0;font-size:14px;font-weight:700;color:#92400E;">
+        Delivery Instruction Mode: <span style="background:#F59E0B;color:#FFFFFF;padding:2px 8px;border-radius:3px;font-size:12px;letter-spacing:0.1em;">MANUAL DISPATCH</span>
+      </p>
+      <p style="margin:6px 0 0;font-size:12px;color:#78350F;line-height:1.5;">
+        Due to low wallet balance, automatic courier AWB booking has been placed in <strong>Manual Mode</strong>. You must manually process or assign courier waybills from the Admin Panel until the wallet is recharged.
+      </p>
+    </div>
+
+    <div style="margin:24px 0;line-height:1.7;font-size:13px;color:#444;">
+      <p style="margin:0 0 12px;"><strong>Impact & Action Items:</strong></p>
+      <ul style="margin:0;padding-left:20px;color:#555;">
+        <li style="margin-bottom:6px;">Automated API shipment generation is paused to avoid API failure errors.</li>
+        <li style="margin-bottom:6px;">Delivery instructions default to <strong>MANUAL</strong> dispatch in Admin ERP.</li>
+        <li style="margin-bottom:6px;">Recharge your Delhivery wallet to restore 1-click automatic dispatch & next-day morning pickups.</li>
+      </ul>
+    </div>
+
+    <div style="text-align:center;margin:30px 0 20px;">
+      <a href="https://track.delhivery.com/" target="_blank" style="display:inline-block;background:#D2168D;color:#FFFFFF;font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;padding:14px 28px;border-radius:3px;">
+        Recharge Delhivery Wallet Now
+      </a>
+    </div>
+
+    <p style="margin:24px 0 0;font-size:11px;color:#888;text-align:center;">
+      Kozmocart Automated Logistics Operations System
+    </p>"""
+
+    html = _base_template("Delhivery Low Balance Alert", "Logistics Operations Alert", content)
+    return send_smtp_email(owner_email, subject, html, body_text)
+

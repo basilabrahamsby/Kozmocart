@@ -125,6 +125,14 @@ async def delhivery_status_polling_loop():
                                 print(f"Failed to dispatch status notification: {notif_err}")
                             
                 await db.commit()
+
+            # 💰 Check Delhivery wallet balance & alert store owner if < ₹600
+            try:
+                from app.services.delhivery import check_low_delhivery_balance_and_notify
+                await check_low_delhivery_balance_and_notify(threshold=600.0)
+            except Exception as balance_err:
+                print(f"Error checking Delhivery balance: {balance_err}")
+
         except asyncio.CancelledError:
             break
         except Exception as e:

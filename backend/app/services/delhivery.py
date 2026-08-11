@@ -876,3 +876,66 @@ async def schedule_delhivery_pickup(pickup_date: str, pickup_time: str, pickup_l
             "success": False,
             "message": str(e)
         }
+
+
+async def get_delhivery_wallet_balance() -> Optional[float]:
+    """
+    Retrieves current Delhivery prepaid account balance via Delhivery API.
+    Returns float balance value or None if endpoint fails.
+    """
+    config = await get_delhivery_config()
+    api_token = config["api_token"]
+    sandbox = config["sandbox"]
+
+    if api_token == "placeholder_delhivery_token":
+        # Mock balance for sandbox mode
+        return 1250.0
+
+    url = f"{get_base_url(sandbox)}/users/wallet/balance/"
+    headers = {"Authorization": f"Token {api_token}"}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.get(url, headers=headers, timeout=10.0)
+            if res.status_code == 200:
+                data = res.json()
+                # Delhivery balance response structures: {"balance": 1450.0} or [{"amount": 1450.0}]
+                if isinstance(data, dict):
+                    val = data.get("balance") or data.get("amount") or data.get("wallet_balance")
+                    if val is not None:
+                        return float(val)
+                elif isinstance(data, list) and len(data) > 0:
+                    val = data[0].get("balance") or data[0].get("amount")
+                    if val is not None:
+                        return float(val)
+            else:
+                # Try secondary alternative endpoint
+                alt_url = f"{get_base_url(sandbox)}/c/api/wallet/balance/"
+                res2 = await client.get(alt_url, headers=headers, timeout=10.0)
+                if res2.status_code == 200:
+                    data2 = res2.json()
+                    val = data2.get("balance") or data2.get("amount") if isinstance(data2, dict) else None
+                    if val is not None:
+                        return float(val)
+    except Exception as e:
+        logger.error(f"Failed to fetch Delhivery wallet balance: {e}")
+
+    return None
+
+
+async def check_low_delhivery_balance_and_notify(threshold: float = 600.0) -> Optional[float]:
+    """
+    Checks Delhivery wallet balance and triggers low balance alert email to store owner if balance < threshold (₹600).
+    Returns the current balance float.
+    """
+    try:
+        balance = await get_delhivery_wallet_balance()
+        if balance is not None and balance < threshold:
+            from app.services.email import send_delhivery_low_balance_email
+            import asyncio
+            asyncio.create_task(asyncio.to_thread(send_delhivery_low_balance_email, balance, threshold))
+            logger.warning(f"Delhivery low balance alert triggered! Current balance: ₹{balance:,.2f} (< ₹{threshold})")
+        return balance
+    except Exception as e:
+        logger.error(f"Error checking Delhivery balance threshold: {e}")
+        return None
