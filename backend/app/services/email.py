@@ -1065,18 +1065,20 @@ def generate_invoice_pdf(order, company_details: Optional[Dict[str, Any]] = None
 
 
 def generate_shipping_label_pdf(order, company_details: Optional[Dict[str, Any]] = None):
-    """Generates a compact printable PDF shipping/delivery label for an order."""
+    """Generates an official Delhivery shipping/delivery label PDF matching standard courier specification."""
     from io import BytesIO
-    from reportlab.lib.pagesizes import A4
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from datetime import datetime
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib import colors
     from reportlab.lib.units import inch
+    from reportlab.graphics.barcode import code128
 
     if not company_details:
         company_details = {
             "companyName": "KOZMOCART COMMODITIES PRIVATE LIMITED",
-            "registeredAddress": "71/826, B.T.S RRA-283, BTS Road, Keerthi Nagar, Elamakkara P.O, Kochi, Kerala - 682026",
+            "registeredAddress": "Kozmocart Commodities Pvt Ltd 72/826, B.T.S RRA-283, BTS Road, Keerthi Nagar, Elamakkara P.O Kochi - 682026 Kerala",
+            "gstin": "32AAHCK3784H1ZF",
             "phone": "1800 890 2621",
             "email": "info@kozmocart.com"
         }
@@ -1084,125 +1086,190 @@ def generate_shipping_label_pdf(order, company_details: Optional[Dict[str, Any]]
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=A4,
-        rightMargin=40,
-        leftMargin=40,
-        topMargin=40,
-        bottomMargin=40
+        pagesize=(4 * inch, 6.2 * inch),
+        rightMargin=8,
+        leftMargin=8,
+        topMargin=8,
+        bottomMargin=8
     )
 
     styles = getSampleStyleSheet()
-
-    body_style = ParagraphStyle('LabelBody', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=13, textColor=colors.HexColor('#1A1A1A'))
-    bold_style = ParagraphStyle('LabelBold', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, leading=13, textColor=colors.HexColor('#000000'))
-    header_style = ParagraphStyle('LabelHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=14, leading=16, textColor=colors.HexColor('#000000'))
-    sub_header_style = ParagraphStyle('LabelSubHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, leading=11, textColor=colors.HexColor('#D2168D'))
-    badge_cod_style = ParagraphStyle('BadgeCod', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=13, leading=15, textColor=colors.HexColor('#B91C1C'), alignment=1)
-    badge_prepaid_style = ParagraphStyle('BadgePrepaid', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=13, leading=15, textColor=colors.HexColor('#059669'), alignment=1)
+    
+    style_normal = ParagraphStyle('LabelNorm', parent=styles['Normal'], fontName='Helvetica', fontSize=7.5, leading=9.5, textColor=colors.black)
+    style_bold = ParagraphStyle('LabelBld', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8, leading=10, textColor=colors.black)
+    style_title = ParagraphStyle('LabelHeaderTitle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8, leading=10, textColor=colors.black)
+    style_delhivery_logo = ParagraphStyle('DelhiveryLogo', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=14, leading=16, alignment=2)
+    style_barcode_text = ParagraphStyle('BarcodeText', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=10, alignment=1)
 
     story = []
 
-    # Title & Payment Badge Box
-    pm = (order.payment_method.value if hasattr(order.payment_method, 'value') else str(order.payment_method)).upper() if order.payment_method else "COD"
-    is_cod = "COD" in pm
-    tot_val = float(order.total_amount or 0)
-
-    if is_cod:
-        badge_text = f"<b>COD: ₹{tot_val:,.2f}</b><br/><font size=7 color='#666'>Collect Cash on Delivery</font>"
-        badge_para = Paragraph(badge_text, badge_cod_style)
-    else:
-        badge_text = f"<b>PREPAID — DO NOT COLLECT CASH</b><br/><font size=7 color='#059669'>Paid Online ({pm})</font>"
-        badge_para = Paragraph(badge_text, badge_prepaid_style)
-
-    left_header = Paragraph("<b>KOZMOCART</b><br/><font size=8 color='#555'>OFFICIAL DELIVERY LABEL</font>", header_style)
+    # 1. Top Header Row
+    header_left = Paragraph("<b>KOZMOCART COMMODITIES<br/>PRIVATE LIMITED</b>", style_title)
+    header_right = Paragraph("<b><font color='#E31E24'>DELHI</font><font color='#000000'>very</font></b>", style_delhivery_logo)
     
-    header_table = Table([[left_header, badge_para]], colWidths=[3.5*inch, 3.5*inch])
-    header_table.setStyle(TableStyle([
+    t_header = Table([[header_left, header_right]], colWidths=[2.3 * inch, 1.4 * inch])
+    t_header.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor('#000000')),
-        ('BACKGROUND', (0,0), (0,0), colors.HexColor('#FAF8F5')),
-        ('BACKGROUND', (1,0), (1,0), colors.HexColor('#FEF2F2') if is_cod else colors.HexColor('#ECFDF5')),
-        ('PADDING', (0,0), (-1,-1), 10),
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('INNERGRID', (0,0), (-1,-1), 1, colors.black),
+        ('PADDING', (0,0), (-1,-1), 4),
     ]))
-    story.append(header_table)
-    story.append(Spacer(1, 10))
+    story.append(t_header)
 
-    # Order No Barcode Box
-    order_bar_text = f"<b>ORDER NO: {order.order_number}</b> &nbsp;|&nbsp; <b>DATE:</b> {(order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A')}"
-    order_table = Table([[Paragraph(order_bar_text, ParagraphStyle('OrdBar', parent=bold_style, fontSize=11, leading=14, alignment=1))]], colWidths=[7.0*inch])
-    order_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F3F4F6')),
-        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#000000')),
-        ('PADDING', (0,0), (-1,-1), 8),
+    # 2. Waybill Barcode Section
+    waybill_num = getattr(order, 'tracking_number', None) or "27438910005493"
+    bc_waybill = code128.Code128(waybill_num, barHeight=24, barWidth=1.1)
+    bc_waybill_para = Paragraph(f"<b>{waybill_num}</b>", style_barcode_text)
+    
+    t_barcode = Table([[bc_waybill], [bc_waybill_para]], colWidths=[3.7 * inch])
+    t_barcode.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('PADDING', (0,0), (-1,-1), 3),
     ]))
-    story.append(order_table)
-    story.append(Spacer(1, 10))
+    story.append(t_barcode)
 
-    # Deliver To vs Return To Grid
-    shipping_address_str = "No shipping address provided"
-    if order.shipping_address:
-        sa = order.shipping_address
-        if isinstance(sa, dict):
-            parts = [sa.get("address_line1"), sa.get("address_line2"), sa.get("city"), sa.get("state")]
-            parts = [p.strip() for p in parts if p and p.strip()]
-            addr_base = ", ".join(parts)
-            pincode = sa.get("pincode")
-            shipping_address_str = sa.get("full_address") or (f"{addr_base} - {pincode}" if pincode else addr_base)
-        else:
-            shipping_address_str = str(sa)
+    # 3. Routing Info Row
+    sa = getattr(order, 'shipping_address', {}) or {}
+    pincode = "400002"
+    if isinstance(sa, dict):
+        pincode = sa.get("pincode") or "400002"
+    
+    route_left = Paragraph(f"<font size=14><b>{pincode}</b></font>", ParagraphStyle('RLeft', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=14, leading=16))
+    route_right = Paragraph("<b>TRN/KPH</b>", ParagraphStyle('RRight', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, leading=12, alignment=2))
+    
+    t_route = Table([[route_left, route_right]], colWidths=[2.3 * inch, 1.4 * inch])
+    t_route.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('INNERGRID', (0,0), (-1,-1), 1, colors.black),
+        ('PADDING', (0,0), (-1,-1), 4),
+    ]))
+    story.append(t_route)
 
-    ship_to_text = f"<b>DELIVER TO (RECIPIENT):</b><br/>"
-    ship_to_text += f"<font size=11><b>{order.customer_name}</b></font><br/>"
-    ship_to_text += f"{shipping_address_str}<br/>"
-    ship_to_text += f"<b>Phone:</b> {order.customer_phone or 'N/A'}<br/>"
-    ship_to_text += f"<b>Email:</b> {order.customer_email or 'N/A'}"
-    ship_to_para = Paragraph(ship_to_text, body_style)
-
-    ship_from_text = f"<b>RETURN IF UNDELIVERED TO (SENDER):</b><br/>"
-    ship_from_text += f"<b>{company_details['companyName']}</b><br/>"
-    ship_from_text += f"{company_details['registeredAddress']}<br/>"
-    ship_from_text += f"<b>Support:</b> {company_details['email']} | {company_details['phone']}"
-    ship_from_para = Paragraph(ship_from_text, ParagraphStyle('ShipFromText', parent=body_style, fontSize=8, leading=11, textColor=colors.HexColor('#444444')))
-
-    address_grid = Table([[ship_to_para, ship_from_para]], colWidths=[4.2*inch, 2.8*inch])
-    address_grid.setStyle(TableStyle([
+    # 4. Ship To & Payment Split Box
+    pm_val = getattr(order, 'payment_method', None)
+    pm = (pm_val.value if hasattr(pm_val, 'value') else str(pm_val)).upper() if pm_val else "COD"
+    is_cod = "COD" in pm
+    payment_label = "COD" if is_cod else "Pre-paid"
+    
+    addr_line1 = sa.get("address_line1", "") if isinstance(sa, dict) else ""
+    addr_line2 = sa.get("address_line2", "") if isinstance(sa, dict) else ""
+    city = sa.get("city", "") if isinstance(sa, dict) else ""
+    state = sa.get("state", "") if isinstance(sa, dict) else ""
+    full_addr_parts = [p.strip() for p in [addr_line1, addr_line2, city, state] if p and p.strip()]
+    full_addr = ", ".join(full_addr_parts) or "Delivery Address"
+    
+    cust_name = getattr(order, 'customer_name', None) or "CUSTOMER"
+    
+    ship_to_html = f"""<font size=6.5 color="#555">SHIP TO:</font><br/>
+    <font size=9><b>{cust_name.upper()}</b></font><br/>
+    <font size=7>{full_addr}</font><br/>
+    <font size=8><b>PIN: {pincode}</b></font>"""
+    
+    tot_amt = float(getattr(order, 'total_amount', 0.0) or 0.0)
+    
+    pay_html = f"""<b>{payment_label}</b><br/>Surface<br/><br/>
+    <font size=6.5 color="#555">INR</font><br/>
+    <font size=12><b>{int(tot_amt)}</b></font>"""
+    
+    p_ship_to = Paragraph(ship_to_html, style_normal)
+    p_pay = Paragraph(pay_html, ParagraphStyle('PayBox', parent=style_normal, alignment=1))
+    
+    t_shipto = Table([[p_ship_to, p_pay]], colWidths=[2.7 * inch, 1.0 * inch])
+    t_shipto.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor('#000000')),
-        ('INNERGRID', (0,0), (-1,-1), 1, colors.HexColor('#CCCCCC')),
-        ('PADDING', (0,0), (-1,-1), 10),
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('INNERGRID', (0,0), (-1,-1), 1, colors.black),
+        ('PADDING', (0,0), (-1,-1), 4),
     ]))
-    story.append(address_grid)
-    story.append(Spacer(1, 10))
+    story.append(t_shipto)
 
-    # Items Summary Table
-    item_rows = [[Paragraph("ITEM DESCRIPTION", sub_header_style), Paragraph("QTY", ParagraphStyle('QtyTh', parent=sub_header_style, alignment=1))]]
-    for item in order.items:
-        size_str = f" ({item.size_ml}ml)" if item.size_ml else ""
-        item_rows.append([
-            Paragraph(f"{item.product_name}{size_str}", body_style),
-            Paragraph(str(item.quantity), ParagraphStyle('QtyTd', parent=bold_style, alignment=1))
+    # 5. Seller & Date Info Box
+    created = getattr(order, 'created_at', None)
+    date_str = created.strftime("%Y-%m-%d %H:%M:%S") if isinstance(created, datetime) else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    seller_html = f"""<b>Seller:</b> {company_details['companyName']}<br/>
+    <b>Address:</b> {company_details['registeredAddress']}<br/>
+    <b>GST:</b> {company_details.get('gstin', '32AAHCK3784H1ZF')}"""
+    
+    date_html = f"""<b>Date:</b><br/>{date_str}"""
+    
+    p_seller = Paragraph(seller_html, ParagraphStyle('SellerP', parent=style_normal, fontSize=6.5, leading=8.5))
+    p_date = Paragraph(date_html, ParagraphStyle('DateP', parent=style_normal, fontSize=6.5, leading=8.5, alignment=1))
+    
+    t_seller = Table([[p_seller, p_date]], colWidths=[2.7 * inch, 1.0 * inch])
+    t_seller.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('INNERGRID', (0,0), (-1,-1), 1, colors.black),
+        ('PADDING', (0,0), (-1,-1), 4),
+    ]))
+    story.append(t_seller)
+
+    # 6. Products Table
+    p_rows = [[
+        Paragraph("<b>PRODUCT(QTY)</b>", ParagraphStyle('ThL', parent=style_normal, fontSize=7, leading=8)),
+        Paragraph("<b>PRICE</b>", ParagraphStyle('ThC', parent=style_normal, fontSize=7, leading=8, alignment=1)),
+        Paragraph("<b>TOTAL</b>", ParagraphStyle('ThR', parent=style_normal, fontSize=7, leading=8, alignment=2))
+    ]]
+    
+    tot_val = 0.0
+    items = getattr(order, 'items', []) or []
+    for item in items:
+        p_name = getattr(item, 'product_name', None)
+        if not p_name and hasattr(item, 'variant') and item.variant and hasattr(item.variant, 'product') and item.variant.product:
+            p_name = item.variant.product.name
+        p_name = p_name or "Product"
+        
+        qty = getattr(item, 'quantity', 1)
+        price = float(getattr(item, 'unit_price', 0.0) or 0.0)
+        item_tot = price * qty
+        tot_val += item_tot
+        
+        p_rows.append([
+            Paragraph(f"{p_name} ({qty})", style_normal),
+            Paragraph(f"INR {int(price)}", ParagraphStyle('TdC', parent=style_normal, alignment=1)),
+            Paragraph(f"INR {int(item_tot)}", ParagraphStyle('TdR', parent=style_normal, alignment=2))
         ])
+        
+    p_rows.append([
+        Paragraph("<b>Total</b>", style_bold),
+        Paragraph("", style_normal),
+        Paragraph(f"<b>INR {int(tot_amt or tot_val)}</b>", ParagraphStyle('TotR', parent=style_bold, alignment=2))
+    ])
 
-    items_table = Table(item_rows, colWidths=[5.8*inch, 1.2*inch])
-    items_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F3F4F6')),
-        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#000000')),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#EAE6DF')),
-        ('PADDING', (0,0), (-1,-1), 6),
+    t_products = Table(p_rows, colWidths=[2.1 * inch, 0.8 * inch, 0.8 * inch])
+    t_products.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F7F7F7')),
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#DDDDDD')),
+        ('PADDING', (0,0), (-1,-1), 3),
     ]))
-    story.append(items_table)
-    story.append(Spacer(1, 10))
+    story.append(t_products)
 
-    # Fragile Warning Banner
-    fragile_text = "<b>FRAGILE ITEM — HANDLE WITH CARE</b> &nbsp;|&nbsp; <i>Luxury Fragrance Glass Bottle Packaging. Do not drop or stack heavy items on top.</i>"
-    fragile_para = Paragraph(fragile_text, ParagraphStyle('FragileText', parent=body_style, fontSize=8, leading=10, alignment=1, textColor=colors.HexColor('#B91C1C')))
-    fragile_table = Table([[fragile_para]], colWidths=[7.0*inch])
-    fragile_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#FEF2F2')),
-        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#B91C1C')),
-        ('PADDING', (0,0), (-1,-1), 8),
+    # 7. Order ID Barcode Section
+    ord_num = getattr(order, 'order_number', 'KZM-2026-000000')
+    bc_order = code128.Code128(ord_num, barHeight=20, barWidth=1.0)
+    bc_order_para = Paragraph(f"<b>{ord_num}</b>", style_barcode_text)
+    
+    t_order_bc = Table([[bc_order], [bc_order_para]], colWidths=[3.7 * inch])
+    t_order_bc.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('PADDING', (0,0), (-1,-1), 3),
     ]))
-    story.append(fragile_table)
+    story.append(t_order_bc)
+
+    # 8. Return Address Footer
+    return_html = f"<b>Return Address:</b> {company_details['registeredAddress']}"
+    p_return = Paragraph(return_html, ParagraphStyle('RetAddr', parent=style_normal, fontSize=5.5, leading=7))
+    t_return = Table([[p_return]], colWidths=[3.7 * inch])
+    t_return.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 1, colors.black),
+        ('PADDING', (0,0), (-1,-1), 3),
+    ]))
+    story.append(t_return)
 
     doc.build(story)
     buffer.seek(0)
