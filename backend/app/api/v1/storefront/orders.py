@@ -97,6 +97,14 @@ async def book_delhivery_shipment_task(order_id: uuid.UUID):
             db.add(history)
             await db.commit()
 
+            # 🚚 Automatically schedule next-day first-slot courier pickup with Delhivery
+            try:
+                from app.services.delhivery import request_delhivery_pickup
+                pickup_res = await request_delhivery_pickup(pickup_date=None, pickup_time="09:00:00", package_count=1)
+                logger.info(f"Automated Delhivery pickup triggered for order {order.order_number}: {pickup_res}")
+            except Exception as p_err:
+                logger.error(f"Failed to auto-trigger Delhivery pickup for order {order.order_number}: {p_err}")
+
 
 @router.get("/{order_id}/invoice", response_class=HTMLResponse)
 async def get_storefront_order_invoice(
