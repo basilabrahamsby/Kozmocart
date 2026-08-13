@@ -511,9 +511,24 @@ def generate_delhivery_label_html(order, pkg: Optional[Dict[str, Any]] = None) -
     order_num = pkg.get("oid") if (pkg and pkg.get("oid")) else order.order_number
     
     # Destination fields
-    dest_name = pkg.get("name") if (pkg and pkg.get("name")) else order.customer_name
-    
+    raw_name = pkg.get("name") if (pkg and pkg.get("name")) else None
+    if not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", ""):
+        raw_name = getattr(order, 'customer_name', None)
+    if not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", ""):
+        if hasattr(order, 'customer') and order.customer and getattr(order.customer, 'full_name', None):
+            raw_name = order.customer.full_name
+            
     shipping_addr_obj = order.shipping_address or {}
+    if (not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "")) and isinstance(shipping_addr_obj, dict):
+        raw_name = shipping_addr_obj.get('full_name') or shipping_addr_obj.get('name') or shipping_addr_obj.get('customer_name')
+
+    if (not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "")) and getattr(order, 'customer_email', None):
+        local_part = order.customer_email.split('@')[0]
+        clean_part = ''.join([c if c.isalpha() else ' ' for c in local_part]).strip()
+        raw_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Valued Customer"
+
+    dest_name = (raw_name or "Valued Customer").strip()
+    
     dest_address = pkg.get("address") if (pkg and pkg.get("address")) else (
         shipping_addr_obj.get("address_line1", "") + ", " + 
         shipping_addr_obj.get("address_line2", "") + ", " +
