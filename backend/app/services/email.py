@@ -1117,7 +1117,15 @@ def generate_shipping_label_pdf(order, company_details: Optional[Dict[str, Any]]
     story.append(t_header)
 
     # 2. Waybill Barcode Section
-    waybill_num = getattr(order, 'tracking_number', None) or "27438910005493"
+    waybill_num = getattr(order, 'tracking_number', None)
+    if not waybill_num and isinstance(order, dict):
+        waybill_num = order.get("tracking_number")
+    if not waybill_num:
+        ord_str = getattr(order, 'order_number', '0000')
+        clean_digits = ''.join(filter(str.isdigit, ord_str))
+        suffix = clean_digits[-4:] if len(clean_digits) >= 4 else "5493"
+        waybill_num = f"2743891000{suffix}"
+
     bc_waybill = code128.Code128(waybill_num, barHeight=24, barWidth=1.1)
     bc_waybill_para = Paragraph(f"<b>{waybill_num}</b>", style_barcode_text)
     
@@ -1279,6 +1287,7 @@ def generate_shipping_label_pdf(order, company_details: Optional[Dict[str, Any]]
 class InvoiceOrderWrapper:
     def __init__(self, data: Dict[str, Any], items: List[Dict[str, Any]]):
         self.order_number = data.get("order_number")
+        self.tracking_number = data.get("tracking_number") or ""
         self.created_at = data.get("created_at") or datetime.now()
         self.payment_method = data.get("payment_method") or "COD"
         self.payment_status = data.get("payment_status") or "PENDING"
@@ -1323,6 +1332,7 @@ def send_admin_invoice_email(
     payment_method: str = "",
     coupon_code: str = "",
     gift_message: str = "",
+    tracking_number: str = ""
 ) -> bool:
     subject = f"[INVOICE & LABEL/ORDER] {order_number} - New Order Details"
     body_text = f"New Order Details for {order_number}. Customer: {customer_name}. Total: ₹{total:,.2f}"
@@ -1369,6 +1379,7 @@ def send_admin_invoice_email(
     attachments_list = []
     order_data = {
         "order_number": order_number,
+        "tracking_number": tracking_number,
         "created_at": datetime.now(),
         "payment_method": payment_method,
         "payment_status": "PAID" if payment_method.lower() in ("card", "upi", "razorpay") else "PENDING",
