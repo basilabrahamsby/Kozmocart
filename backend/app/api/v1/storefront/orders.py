@@ -51,14 +51,31 @@ def generate_order_number() -> str:
 
 def _enrich_order(order: Order) -> OrderOut:
     out = OrderOut.model_validate(order)
-    # Ensure customer details from the linked customer record if they aren't on the order snapshot or are generic
+    c_name = getattr(order.customer, 'full_name', None) if order.customer else None
+    
+    sa = getattr(order, 'shipping_address', {}) or {}
+    addr_name = None
+    if isinstance(sa, dict):
+        addr_name = sa.get('full_name') or sa.get('name') or sa.get('customer_name')
+        
+    if not out.customer_name or out.customer_name.strip() in ("New Customer", "Customer", ""):
+        if c_name and c_name.strip() not in ("New Customer", "Customer", ""):
+            out.customer_name = c_name.strip()
+        elif addr_name and addr_name.strip():
+            out.customer_name = addr_name.strip()
+        elif out.customer_email:
+            local_part = out.customer_email.split('@')[0]
+            clean_part = ''.join([c if c.isalpha() else ' ' for c in local_part]).strip()
+            out.customer_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Valued Customer"
+        else:
+            out.customer_name = "Valued Customer"
+
     if order.customer:
-        if not out.customer_name or out.customer_name == "New Customer":
-            out.customer_name = order.customer.full_name
         if not out.customer_email:
             out.customer_email = order.customer.email
         if not out.customer_phone:
             out.customer_phone = order.customer.phone
+            
     return out
 
 

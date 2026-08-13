@@ -63,8 +63,13 @@ async def verify_otp(body: OTPVerifyRequest, db: AsyncSession = Depends(get_db))
     customer = result.scalar_one_or_none()
     
     if not customer:
-        # Derive name from email prefix if name is missing
-        derived_name = body.email.split('@')[0].replace('.', ' ').replace('_', ' ').capitalize() if body.email else "New Customer"
+        # Derive human-readable name from email or default to Valued Customer
+        if body.email:
+            local_part = body.email.split('@')[0]
+            clean_part = ''.join([c if c.isalpha() else ' ' for c in local_part]).strip()
+            derived_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Valued Customer"
+        else:
+            derived_name = "Valued Customer"
         
         customer = Customer(
             email=body.email,
