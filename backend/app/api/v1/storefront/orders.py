@@ -336,6 +336,17 @@ async def storefront_checkout(
             .options(joinedload(ProductVariant.product))
         )
         variant = variant_res.scalar_one_or_none()
+        if not variant and item_data.variant_id:
+            p_res = await db.execute(
+                select(Product)
+                .where(Product.id == item_data.variant_id)
+                .options(selectinload(Product.variants))
+            )
+            p_obj = p_res.scalar_one_or_none()
+            if p_obj and p_obj.variants:
+                variant = p_obj.variants[0]
+                item_data.variant_id = variant.id
+
         if variant and variant.loyalty_points:
             earned_points += (variant.loyalty_points * item_data.quantity)
 
@@ -483,6 +494,18 @@ async def create_razorpay_order(
             .options(joinedload(ProductVariant.product))
         )
         variant = variant_res.scalar_one_or_none()
+        if not variant and item_data.variant_id:
+            # Fallback: check if variant_id was passed as a product_id
+            p_res = await db.execute(
+                select(Product)
+                .where(Product.id == item_data.variant_id)
+                .options(selectinload(Product.variants))
+            )
+            p_obj = p_res.scalar_one_or_none()
+            if p_obj and p_obj.variants:
+                variant = p_obj.variants[0]
+                item_data.variant_id = variant.id
+
         if not variant:
             raise HTTPException(
                 status_code=400, 

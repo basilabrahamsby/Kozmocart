@@ -342,12 +342,18 @@ export default function Checkout() {
         } : {};
       }
 
-      const orderItems = items.map(item => ({
-        variant_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.price,
-        discount_amount: 0.0
-      }));
+      const orderItems = items.map(item => {
+        let vId = (item as any).variant_id || (item as any).variantId || item.id;
+        if (vId && typeof vId === 'string' && vId.includes('-default')) {
+          vId = vId.replace('-default', '');
+        }
+        return {
+          variant_id: vId,
+          quantity: item.quantity || 1,
+          unit_price: item.price || 0,
+          discount_amount: 0.0
+        };
+      }).filter(item => Boolean(item.variant_id));
 
       const shippingLimit = cmsLayout?.free_shipping_limit || 999;
       const finalShippingFee = totalPrice() >= shippingLimit ? 0 : shippingFee; 
