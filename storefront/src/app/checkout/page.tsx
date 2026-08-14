@@ -111,6 +111,35 @@ export default function Checkout() {
     }
   }, [items, totalPrice]);
 
+  // Pre-audit cart items for stock availability on checkout page load
+  useEffect(() => {
+    const auditCartStock = async () => {
+      if (items.length === 0) return;
+      try {
+        const prodRes = await api.get('/products', { params: { limit: 120 } });
+        const products = prodRes.data || [];
+        
+        for (const item of items) {
+          const matchedProd = products.find((p: any) => 
+            p.id === item.productId || p.variants?.some((v: any) => v.id === item.id)
+          );
+          if (matchedProd) {
+            const matchedVar = matchedProd.variants?.find((v: any) => v.id === item.id) || matchedProd.variants?.[0];
+            if (matchedVar && matchedVar.current_stock !== undefined && matchedVar.current_stock <= 0) {
+              const sizeStr = matchedVar.size_ml ? ` (${matchedVar.size_ml}ml)` : '';
+              setCheckoutError(`We apologize, but '${matchedProd.name}${sizeStr}' is currently Out of Stock. Please remove it from your bag to proceed.`);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Pre-audit cart stock failed', err);
+      }
+    };
+
+    auditCartStock();
+  }, [items]);
+
   useEffect(() => {
     if (customer) {
       setContactForm({
