@@ -161,6 +161,7 @@ export default function ProductClient({
   const removeFromWishlist = useWishlistStore((state) => state.removeItem);
 
   const isWishlisted = product ? wishlistItems.some((i: any) => i.id === product.id) : false;
+  const isOutOfStock = !selectedVariant || (selectedVariant.current_stock !== undefined && selectedVariant.current_stock <= 0);
 
   useEffect(() => {
     const fetchProductAndRecs = async () => {
@@ -626,28 +627,43 @@ export default function ProductClient({
             <div className="mb-10">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-[10px] font-semibold tracking-[0.25em] text-neutral-900 uppercase">Select Size</h3>
-                <span className="text-[9px] font-medium text-neutral-400 uppercase tracking-widest">In Stock</span>
+                <span className={`text-[9px] font-bold uppercase tracking-widest ${isOutOfStock ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                </span>
               </div>
               <div className="flex flex-wrap gap-3">
-                {product.variants && product.variants.map((v: any) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariant(v)}
-                    className={`px-6 py-3 border text-xs font-semibold tracking-widest uppercase transition-all duration-300 rounded ${
-                      selectedVariant?.id === v.id
-                        ? 'border-black bg-black text-white shadow-md'
-                        : 'border-neutral-200 text-neutral-600 hover:border-black bg-neutral-50/50'
-                    }`}
-                  >
-                    {v.size_ml}ML
-                  </button>
-                ))}
+                {product.variants && product.variants.map((v: any) => {
+                  const vOutOfStock = v.current_stock !== undefined && v.current_stock <= 0;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariant(v)}
+                      className={`px-6 py-3 border text-xs font-semibold tracking-widest uppercase transition-all duration-300 rounded ${
+                        selectedVariant?.id === v.id
+                          ? 'border-black bg-black text-white shadow-md'
+                          : vOutOfStock
+                            ? 'border-neutral-200 text-neutral-400 bg-neutral-100/80'
+                            : 'border-neutral-200 text-neutral-600 hover:border-black bg-neutral-50/50'
+                      }`}
+                    >
+                      {v.size_ml}ML {vOutOfStock ? '(Sold Out)' : ''}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* ACTIONS: Cart & Wishlist */}
             <div className="flex gap-4 mb-10 h-14">
-              {cartItem ? (
+              {isOutOfStock ? (
+                <button
+                  disabled
+                  className="flex-1 bg-neutral-200 text-neutral-500 cursor-not-allowed text-[9px] font-bold tracking-[0.15em] flex items-center justify-center space-x-2 h-full rounded uppercase"
+                >
+                  <ShoppingBag size={14} />
+                  <span>OUT OF STOCK</span>
+                </button>
+              ) : cartItem ? (
                 <div className="flex-1 flex border border-black rounded overflow-hidden">
                   <button
                     onClick={() => updateQuantity(cartItem.id, cartItem.quantity - 1)}
@@ -675,12 +691,14 @@ export default function ProductClient({
                 </button>
               )}
               
-              <button
-                onClick={handleBuyNow}
-                className="flex-1 bg-amber-500 text-black text-[9px] font-black tracking-[0.15em] hover:bg-amber-600 transition-colors flex items-center justify-center space-x-2 h-full rounded shadow-sm hover:shadow-md duration-300"
-              >
-                <span>BUY NOW</span>
-              </button>
+              {!isOutOfStock && (
+                <button
+                  onClick={handleBuyNow}
+                  className="flex-1 bg-amber-500 text-black text-[9px] font-black tracking-[0.15em] hover:bg-amber-600 transition-colors flex items-center justify-center space-x-2 h-full rounded shadow-sm hover:shadow-md duration-300"
+                >
+                  <span>BUY NOW</span>
+                </button>
+              )}
               
               <button
                 onClick={() => {

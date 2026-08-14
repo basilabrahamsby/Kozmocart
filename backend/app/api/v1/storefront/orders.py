@@ -489,6 +489,20 @@ async def create_razorpay_order(
                 detail="Selected product variant is no longer available. Please refresh your cart."
             )
 
+        # Check total available stock in InventoryBatch
+        stock_res = await db.execute(
+            select(func.coalesce(func.sum(InventoryBatch.current_quantity), 0))
+            .where(InventoryBatch.variant_id == item_data.variant_id)
+        )
+        avail_stock = stock_res.scalar() or 0
+        if avail_stock < item_data.quantity:
+            p_name = variant.product.name if variant and variant.product else "Item"
+            size_str = f" ({variant.size_ml}ml)" if variant and variant.size_ml else ""
+            raise HTTPException(
+                status_code=400,
+                detail=f"We apologize, but '{p_name}{size_str}' is currently Out of Stock. Please remove it from your bag to proceed."
+            )
+
     subtotal = sum(item.unit_price * item.quantity - item.discount_amount for item in body.items)
     
     redemption_amount = 0.0
