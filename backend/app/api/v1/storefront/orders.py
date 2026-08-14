@@ -370,7 +370,7 @@ async def storefront_checkout(
                 
             raise HTTPException(
                 status_code=400, 
-                detail=f"We apologize, but there is insufficient stock for '{variant_name}'. Please adjust the quantity or check stock availability."
+                detail=f"We apologize, but '{variant_name}' is currently Out of Stock. Please remove it from your bag to proceed."
             )
 
         # Deduct and update stock

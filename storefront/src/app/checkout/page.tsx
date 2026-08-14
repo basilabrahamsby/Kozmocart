@@ -471,7 +471,7 @@ export default function Checkout() {
       const detail = err.response?.data?.detail;
       const errorMsg = typeof detail === 'string'
         ? detail
-        : (detail ? JSON.stringify(detail) : (err.message || 'Order placement failed. Please review stock and try again.'));
+        : (detail ? (Array.isArray(detail) ? detail.map((d: any) => d.msg || d.message).join('; ') : JSON.stringify(detail)) : (err.message || 'Order placement failed. Please review stock and try again.'));
       setCheckoutError(errorMsg);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setPlacingOrder(false);
