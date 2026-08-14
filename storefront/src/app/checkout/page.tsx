@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function Checkout() {
-  const { items, clearCart, totalPrice } = useCartStore();
+  const { items, clearCart, totalPrice, removeItem } = useCartStore();
   const { customer, token } = useAuthStore();
   const router = useRouter();
 
@@ -379,7 +379,10 @@ export default function Checkout() {
           rzpOrderData = createRes.data;
         } catch (err: any) {
           const detail = err.response?.data?.detail;
-          setCheckoutError(detail ? (typeof detail === 'string' ? detail : JSON.stringify(detail)) : 'Failed to initialize payment.');
+          const msg = typeof detail === 'string'
+            ? detail
+            : (detail ? (Array.isArray(detail) ? detail.map((d: any) => d.msg || d.message).join('; ') : JSON.stringify(detail)) : (err.message || 'Failed to initialize payment.'));
+          setCheckoutError(msg);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setPlacingOrder(false);
           return;
@@ -922,7 +925,16 @@ export default function Checkout() {
                     </div>
                     <div>
                       <p className="font-bold text-neutral-900 line-clamp-1 uppercase tracking-wide">{item.name}</p>
-                      <p className="text-neutral-400 mt-0.5 uppercase font-black tracking-widest text-[9px]">{item.sizeMl}ML × {item.quantity}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-neutral-400 uppercase font-black tracking-widest text-[9px]">{item.sizeMl}ML × {item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          className="text-[9px] font-bold text-red-500 hover:text-red-700 underline uppercase tracking-wider"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <span className="font-bold text-neutral-900 whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
