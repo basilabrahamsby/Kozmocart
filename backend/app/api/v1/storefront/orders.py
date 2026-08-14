@@ -12,7 +12,7 @@ import hmac
 import hashlib
 
 from app.core.database import get_db
-from app.core.deps import get_current_customer
+from app.core.deps import get_current_customer, get_optional_customer
 from app.models.customer import Customer, CustomerAddress
 from app.models.order import Order, OrderItem, OrderStatus, PaymentStatus, PaymentMethod, OrderStatusHistory
 from app.models.inventory import InventoryBatch, InventoryMovement
@@ -237,16 +237,21 @@ async def storefront_checkout(
     body: OrderCreate,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    customer: Customer = Depends(get_current_customer)
+    customer: Customer | None = Depends(get_optional_customer)
 ):
     addr_phone = (body.shipping_address or {}).get("phone") or (body.billing_address or {}).get("phone")
     addr_email = (body.shipping_address or {}).get("email") or (body.billing_address or {}).get("email")
     addr_name = (body.shipping_address or {}).get("name") or (body.billing_address or {}).get("name")
 
-    body.customer_id = customer.id
-    body.customer_name = customer.full_name or addr_name or "Customer"
-    body.customer_email = customer.email or addr_email or "customer@kozmocart.com"
-    body.customer_phone = customer.phone or addr_phone or "9876543210"
+    c_id = customer.id if customer else None
+    c_name = (customer.full_name if customer else None) or body.customer_name or addr_name or "Customer"
+    c_email = (customer.email if customer else None) or body.customer_email or addr_email or "customer@kozmocart.com"
+    c_phone = (customer.phone if customer else None) or body.customer_phone or addr_phone or "9876543210"
+
+    body.customer_id = c_id
+    body.customer_name = c_name
+    body.customer_email = c_email
+    body.customer_phone = c_phone
     body.channel = "storefront"
     
     subtotal = sum(item.unit_price * item.quantity - item.discount_amount for item in body.items)
@@ -471,16 +476,21 @@ async def storefront_checkout(
 async def create_razorpay_order(
     body: OrderCreate,
     db: AsyncSession = Depends(get_db),
-    customer: Customer = Depends(get_current_customer)
+    customer: Customer | None = Depends(get_optional_customer)
 ):
     addr_phone = (body.shipping_address or {}).get("phone") or (body.billing_address or {}).get("phone")
     addr_email = (body.shipping_address or {}).get("email") or (body.billing_address or {}).get("email")
     addr_name = (body.shipping_address or {}).get("name") or (body.billing_address or {}).get("name")
 
-    body.customer_id = customer.id
-    body.customer_name = customer.full_name or addr_name or "Customer"
-    body.customer_email = customer.email or addr_email or "customer@kozmocart.com"
-    body.customer_phone = customer.phone or addr_phone or "9876543210"
+    c_id = customer.id if customer else None
+    c_name = (customer.full_name if customer else None) or body.customer_name or addr_name or "Customer"
+    c_email = (customer.email if customer else None) or body.customer_email or addr_email or "customer@kozmocart.com"
+    c_phone = (customer.phone if customer else None) or body.customer_phone or addr_phone or "9876543210"
+
+    body.customer_id = c_id
+    body.customer_name = c_name
+    body.customer_email = c_email
+    body.customer_phone = c_phone
     body.channel = "storefront"
     body.payment_method = PaymentMethod.razorpay
     body.payment_gateway = "razorpay"
