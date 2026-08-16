@@ -18,6 +18,9 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+import { useCartStore } from '@/store/cartStore';
+
 const getSkuProductName = (sku: string, products: any[]) => {
    for (const prod of products) {
       if (prod.variants?.some((v: any) => v.sku === sku)) {
@@ -28,13 +31,16 @@ const getSkuProductName = (sku: string, products: any[]) => {
 };
 
 export default function Home() {
-   const [newArrivals, setNewArrivals] = useState([]);
-   const [bestsellers, setBestsellers] = useState([]);
-   const [favoriteProducts, setFavoriteProducts] = useState([]);
-   const [homepageOffers, setHomepageOffers] = useState([]);
-   const [categories, setCategories] = useState([]);
-   const [loyaltyRewards, setLoyaltyRewards] = useState([]);
-   const [brands, setBrands] = useState([]);
+   const router = useRouter();
+   const addItem = useCartStore((state) => state.addItem);
+
+   const [newArrivals, setNewArrivals] = useState<any[]>([]);
+   const [bestsellers, setBestsellers] = useState<any[]>([]);
+   const [favoriteProducts, setFavoriteProducts] = useState<any[]>([]);
+   const [homepageOffers, setHomepageOffers] = useState<any[]>([]);
+   const [categories, setCategories] = useState<any[]>([]);
+   const [loyaltyRewards, setLoyaltyRewards] = useState<any[]>([]);
+   const [brands, setBrands] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
    const [currentSlide, setCurrentSlide] = useState(0);
    const [currentPromoIdx, setCurrentPromoIdx] = useState(0);
@@ -44,6 +50,44 @@ export default function Home() {
    const [currentAds1, setCurrentAds1] = useState(0);
    const [currentAds2, setCurrentAds2] = useState(0);
    const [currentAds3, setCurrentAds3] = useState(0);
+
+   // Touch swipe states
+   const [heroTouchStart, setHeroTouchStart] = useState<number | null>(null);
+   const [heroTouchEnd, setHeroTouchEnd] = useState<number | null>(null);
+   const [promoTouchStart, setPromoTouchStart] = useState<number | null>(null);
+   const [promoTouchEnd, setPromoTouchEnd] = useState<number | null>(null);
+
+   const minSwipeDistance = 40;
+
+   const handleAddProductToCart = (prod: any, e?: React.MouseEvent) => {
+      if (e) {
+         e.preventDefault();
+         e.stopPropagation();
+      }
+      const variant = prod.variants?.[0];
+      if (!variant) return;
+      addItem({
+         id: variant.id,
+         productId: prod.id,
+         slug: prod.slug,
+         name: prod.name,
+         variantName: variant.sku,
+         price: variant.selling_price,
+         image: getMediaUrl(prod.images?.[0] || prod.image),
+         quantity: 1,
+         sizeMl: variant.size_ml,
+         loyaltyPoints: variant.loyalty_points,
+      });
+   };
+
+   const handleBuyNowProduct = (prod: any, e?: React.MouseEvent) => {
+      if (e) {
+         e.preventDefault();
+         e.stopPropagation();
+      }
+      handleAddProductToCart(prod);
+      router.push('/checkout');
+   };
 
    useEffect(() => {
       if (typeof window !== 'undefined') {
@@ -77,6 +121,50 @@ export default function Home() {
       }, 6000);
       return () => clearInterval(interval);
    }, [heroSlidesToUse]);
+
+   // Flash Offers auto-slide timer (6 seconds)
+   useEffect(() => {
+      if (homepageOffers.length <= 1) return;
+      const interval = setInterval(() => {
+         setCurrentPromoIdx((prev) => (prev + 1) % homepageOffers.length);
+      }, 6000);
+      return () => clearInterval(interval);
+   }, [homepageOffers.length]);
+
+   // Touch swipe handlers
+   const onHeroTouchStart = (e: React.TouchEvent) => {
+      setHeroTouchEnd(null);
+      setHeroTouchStart(e.targetTouches[0].clientX);
+   };
+   const onHeroTouchMove = (e: React.TouchEvent) => {
+      setHeroTouchEnd(e.targetTouches[0].clientX);
+   };
+   const onHeroTouchEnd = () => {
+      if (!heroTouchStart || !heroTouchEnd) return;
+      const distance = heroTouchStart - heroTouchEnd;
+      if (distance > minSwipeDistance) {
+         setCurrentSlide((prev) => (prev + 1) % heroSlidesToUse.length);
+      } else if (distance < -minSwipeDistance) {
+         setCurrentSlide((prev) => (prev === 0 ? heroSlidesToUse.length - 1 : prev - 1));
+      }
+   };
+
+   const onPromoTouchStart = (e: React.TouchEvent) => {
+      setPromoTouchEnd(null);
+      setPromoTouchStart(e.targetTouches[0].clientX);
+   };
+   const onPromoTouchMove = (e: React.TouchEvent) => {
+      setPromoTouchEnd(e.targetTouches[0].clientX);
+   };
+   const onPromoTouchEnd = () => {
+      if (!promoTouchStart || !promoTouchEnd) return;
+      const distance = promoTouchStart - promoTouchEnd;
+      if (distance > minSwipeDistance) {
+         setCurrentPromoIdx((prev) => (prev + 1) % homepageOffers.length);
+      } else if (distance < -minSwipeDistance) {
+         setCurrentPromoIdx((prev) => (prev === 0 ? homepageOffers.length - 1 : prev - 1));
+      }
+   };
 
    useEffect(() => {
       const len = Array.isArray(cmsLayout?.grid_ads_1) ? cmsLayout.grid_ads_1.length : 1;
@@ -247,7 +335,12 @@ export default function Home() {
 
          {/* Main Hero Banner Slider - only shown if CMS hero slides or active offer banners are configured */}
          {heroSlidesToUse.length > 0 && (
-         <section className="relative w-full aspect-[3/4] sm:aspect-auto sm:h-[350px] md:h-[420px] lg:h-[480px] bg-black overflow-hidden">
+         <section 
+            onTouchStart={onHeroTouchStart}
+            onTouchMove={onHeroTouchMove}
+            onTouchEnd={onHeroTouchEnd}
+            className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[3.6/1] max-h-[520px] min-h-[320px] bg-neutral-950 overflow-hidden select-none"
+         >
             {heroSlidesToUse.map((slide: any, idx: number) => {
                const isPromo = !!slide.discount_type;
                const slideImage = getMediaUrl(slide.banner_url || slide.image);
@@ -288,7 +381,7 @@ export default function Home() {
                         src={slideImage}
                         alt={slideTitle}
                         fetchPriority={idx === 0 ? "high" : "low"}
-                        className="hidden md:block absolute inset-0 w-full h-full object-contain md:object-cover object-center"
+                        className="hidden md:block absolute inset-0 w-full h-full object-cover object-center"
                      />
                      {/* Mobile display - fall back to Web image if mobile image is blank */}
                      <img
@@ -297,25 +390,26 @@ export default function Home() {
                         fetchPriority={idx === 0 ? "high" : "low"}
                         className="block md:hidden absolute inset-0 w-full h-full object-cover object-center"
                      />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                     {/* Softened background gradient overlay so graphics & text inside banners remain crystal-clear */}
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
 
-                     <div className="absolute inset-0 flex items-end pb-12 sm:pb-14 md:pb-16">
+                     <div className="absolute inset-0 flex items-end pb-10 sm:pb-12 md:pb-14">
                         <div className="max-w-[1400px] mx-auto w-full px-6 md:px-20 flex flex-col items-start text-left">
-                           <span className={`text-[9px] md:text-xs font-semibold tracking-[0.3em] text-accent uppercase mb-1 md:mb-3 transition-all duration-1000 delay-300 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+                           <span className={`text-[9px] md:text-xs font-semibold tracking-[0.3em] text-accent uppercase mb-1 md:mb-2 transition-all duration-1000 delay-300 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                               } font-montserrat`}>
                               {slideSubtitle}
                            </span>
-                           <h1 className={`text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-normal text-[#d4af37] leading-tight md:leading-none tracking-wide mb-2 md:mb-4 uppercase transition-all duration-1000 delay-500 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+                           <h1 className={`text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-normal text-[#d4af37] leading-tight md:leading-none tracking-wide mb-2 md:mb-3 uppercase transition-all duration-1000 delay-500 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                               }`}>
                               {slideTitle}
                            </h1>
-                           <p className={`hidden sm:block text-neutral-100 font-light font-montserrat text-[10px] md:text-xs lg:text-sm uppercase tracking-[0.4em] max-w-sm md:max-w-xl mb-4 md:mb-6 transition-all duration-1000 delay-700 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+                           <p className={`hidden sm:block text-neutral-100 font-light font-montserrat text-[10px] md:text-xs lg:text-sm uppercase tracking-[0.4em] max-w-sm md:max-w-xl mb-4 md:mb-5 transition-all duration-1000 delay-700 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                               }`}>
                               {slideDesc}
                            </p>
                            <Link 
                               href={slideLink} 
-                              className={`bg-transparent border border-white/80 hover:bg-white text-white hover:text-black px-5 py-2.5 md:px-6 md:py-2.5 text-[10px] md:text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-700 delay-900 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'} font-montserrat rounded-full`}
+                              className={`bg-transparent border border-white/80 hover:bg-white text-white hover:text-black px-5 py-2 md:px-6 md:py-2.5 text-[10px] md:text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-700 delay-900 transform ${idx === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'} font-montserrat rounded-full`}
                            >
                               {slideCta}
                            </Link>
@@ -325,12 +419,26 @@ export default function Home() {
                );
             })}
 
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-3">
+            {/* Desktop Side Arrows for Hero Slider */}
+            <button 
+               onClick={() => setCurrentSlide(p => (p === 0 ? heroSlidesToUse.length - 1 : p - 1))}
+               className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/30 hover:bg-black/80 text-white rounded-full items-center justify-center backdrop-blur-md transition-all border border-white/10"
+            >
+               <ChevronLeft size={20} />
+            </button>
+            <button 
+               onClick={() => setCurrentSlide(p => (p === heroSlidesToUse.length - 1 ? 0 : p + 1))}
+               className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/30 hover:bg-black/80 text-white rounded-full items-center justify-center backdrop-blur-md transition-all border border-white/10"
+            >
+               <ChevronRight size={20} />
+            </button>
+
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-3">
                {heroSlidesToUse.map((_: any, idx: number) => (
                   <button
                      key={idx}
                      onClick={() => setCurrentSlide(idx)}
-                     className={`w-12 h-0.5 transition-all duration-500 ${idx === currentSlide ? 'bg-accent' : 'bg-white/30 hover:bg-white/60'
+                     className={`w-10 sm:w-12 h-0.5 transition-all duration-500 ${idx === currentSlide ? 'bg-accent' : 'bg-white/30 hover:bg-white/60'
                         }`}
                   />
                ))}
@@ -445,131 +553,201 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Cinematic Hero Slider for Flash Offers */}
-          {homepageOffers.length > 0 && (
-             <section className="relative h-[480px] sm:h-[420px] lg:h-[380px] xl:h-[400px] bg-neutral-950 overflow-hidden group border-b border-neutral-900">
-                {/* Background Slider Engine */}
-                <div className="absolute inset-0">
-                   {homepageOffers.map((promo: any, idx: number) => (
-                     <div 
-                       key={promo.id} 
-                       className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === currentPromoIdx ? 'opacity-100 scale-100' : 'opacity-0 scale-110 pointer-events-none'}`}
-                     >
-                        <Link href="/offers" className="absolute inset-0 block cursor-pointer">
-                           <img
-                              src={promo.banner_url ? getMediaUrl(promo.banner_url) : 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&q=80&w=1000'}
-                              alt={promo.title}
-                              className="absolute inset-0 w-full h-full object-cover object-[80%_center] md:object-center opacity-85 group-hover:scale-[1.02] transition-transform duration-[3s]"
-                           />
-                        </Link>
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent pointer-events-none" />
-                        
-                        <div className="absolute inset-0 max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center justify-start">
-                           {/* Text Content */}
-                           <div className="max-w-2xl text-white pt-6 z-10">
-                              <div className="flex items-center gap-4 mb-2 sm:mb-3">
-                                 <span className="h-[1.5px] w-8 bg-accent" />
-                                 <span className="text-[8px] sm:text-[9px] font-bold tracking-[0.2em] text-accent uppercase font-sans">{promo.discount_type}</span>
-                              </div>
-                              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-serif font-normal mb-2 leading-tight tracking-wide uppercase">
-                                 {promo.title}
-                              </h2>
-                              <p className="text-[10px] sm:text-[11px] md:text-xs text-neutral-300 max-w-md mb-3 leading-relaxed font-light tracking-wide opacity-80 line-clamp-2">
-                                 {promo.subtitle || 'Experience a masterfully curated collection of prestige fragrances, hand-selected to define your signature presence.'}
-                              </p>
+          {/* High-Converting Flash Offers & Dynamic Product Layout */}
+          {homepageOffers.length > 0 && (() => {
+             const activePromo = homepageOffers[currentPromoIdx] || homepageOffers[0];
+             
+             // Dynamic side product card resolution
+             const availableProds = (activePromo?.products?.length > 0) ? activePromo.products : (bestsellers.length > 0 ? bestsellers : newArrivals);
+             const leftProduct = availableProds[currentPromoIdx % availableProds.length] || newArrivals[0];
+             const rightProduct = availableProds[(currentPromoIdx + 1) % availableProds.length] || bestsellers[1] || newArrivals[1];
 
-                              {/* Dynamic Offer Rules / Details Block */}
-                              <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-white/5 border border-white/10 rounded-sm max-w-xs backdrop-blur-md">
-                                 <div className="text-[8px] sm:text-[9px] font-bold tracking-widest text-yellow-500 uppercase mb-1.5">Offer Rules & Details</div>
-                                 <div className="flex flex-col gap-1.5 text-[10px] sm:text-[11px]">
-                                    {promo.discount_type?.toLowerCase().includes('bogo') ? (
-                                       <>
-                                          <div className="flex items-start">
-                                             <span className="text-neutral-400 font-bold uppercase w-16 flex-shrink-0">Buy:</span>
-                                             <span className="text-white font-medium uppercase tracking-wide">{promo.buy_skus?.map((sku: string) => getSkuProductName(sku, promo.products || [])).join(', ')}</span>
-                                          </div>
-                                          <div className="flex items-start">
-                                             <span className="text-green-400 font-bold uppercase w-16 flex-shrink-0">Get Free:</span>
-                                             <span className="text-white font-medium uppercase tracking-wide">{promo.get_skus?.map((sku: string) => getSkuProductName(sku, promo.products || [])).join(', ')}</span>
-                                          </div>
-                                       </>
-                                    ) : promo.discount_type?.toLowerCase().includes('percent') || promo.discount_type?.includes('%') ? (
-                                       <>
-                                          <div className="flex items-start">
-                                             <span className="text-neutral-400 font-bold uppercase w-24 flex-shrink-0">Benefit:</span>
-                                             <span className="text-white font-medium">{promo.discount_percentage}% OFF</span>
-                                          </div>
-                                          {promo.min_purchase_amount > 0 && (
-                                             <div className="flex items-start">
-                                                <span className="text-neutral-400 font-bold uppercase w-24 flex-shrink-0">Min Purchase:</span>
-                                                <span className="text-white font-medium">₹{promo.min_purchase_amount.toLocaleString()}</span>
-                                             </div>
-                                          )}
-                                       </>
-                                    ) : (
-                                       <>
-                                          <div className="flex items-start">
-                                             <span className="text-neutral-400 font-bold uppercase w-24 flex-shrink-0">Benefit:</span>
-                                             <span className="text-white font-medium">Flat ₹{promo.flat_discount_amount?.toLocaleString()} OFF</span>
-                                          </div>
-                                          {promo.min_purchase_amount > 0 && (
-                                             <div className="flex items-start">
-                                                <span className="text-neutral-400 font-bold uppercase w-24 flex-shrink-0">Min Purchase:</span>
-                                                <span className="text-white font-medium">₹{promo.min_purchase_amount.toLocaleString()}</span>
-                                             </div>
-                                          )}
-                                       </>
-                                    )}
-                                 </div>
-                              </div>
+             return (
+             <section className="bg-gradient-to-b from-neutral-50 via-white to-neutral-100/60 border-y border-neutral-200/80 py-12 md:py-16 overflow-hidden">
+                <div className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-10">
+                   
+                   {/* Section Title */}
+                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-10 gap-2">
+                      <div>
+                         <span className="text-[9px] font-bold tracking-[0.25em] text-accent uppercase mb-1.5 block font-sans">Curated Promotions</span>
+                         <h2 className="text-2xl sm:text-3xl font-serif font-normal text-neutral-900 uppercase tracking-wide leading-tight">
+                            Flash Offers & Special Curations
+                         </h2>
+                      </div>
+                      <Link href="/offers" className="group flex items-center gap-2 text-[10px] font-bold tracking-widest text-black uppercase hover:text-accent transition-colors font-sans">
+                         <span>View All Offers ({homepageOffers.length})</span>
+                         <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform text-accent" />
+                      </Link>
+                   </div>
 
-                              <div className="flex flex-wrap items-center gap-3 sm:gap-6 font-sans">
-                                 <Link 
-                                    href="/offers"
-                                    className="group flex items-center gap-2 bg-white hover:bg-accent text-black hover:text-white px-4 py-2 sm:px-6 sm:py-2.5 text-[8px] sm:text-[9px] font-bold tracking-[0.2em] uppercase transition-all duration-500 shadow-lg"
-                                 >
-                                    Explore Curation
-                                    <ArrowUpRight size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                 </Link>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                   ))}
+                   {/* Banner + Side Product Cards Grid */}
+                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                      
+                      {/* XL Widescreen Displays: Left Product Card */}
+                      {leftProduct && (
+                         <div className="hidden xl:flex xl:col-span-3 flex-col bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 group">
+                            <div className="relative aspect-square w-full bg-neutral-50 rounded-xl overflow-hidden mb-4 border border-neutral-100">
+                               <span className="absolute top-2.5 left-2.5 z-10 bg-accent text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                                  Featured Offer
+                               </span>
+                               <img 
+                                  src={getMediaUrl(leftProduct.images?.[0] || leftProduct.image)} 
+                                  alt={leftProduct.name} 
+                                  className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                                  onError={(e: any) => { e.target.src = '/placeholder-perfume.png'; }}
+                               />
+                            </div>
+                            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1 truncate">
+                               {leftProduct.brand_name || 'Exclusive Curation'}
+                            </span>
+                            <h3 className="text-sm font-semibold text-neutral-900 uppercase truncate mb-2 group-hover:text-accent transition-colors">
+                               {leftProduct.name}
+                            </h3>
+                            <div className="flex items-center gap-2 mb-4">
+                               <span className="text-sm font-bold font-mono text-black">
+                                  ₹{(leftProduct.variants?.[0]?.selling_price || leftProduct.selling_price || 0).toLocaleString('en-IN')}
+                               </span>
+                               {leftProduct.variants?.[0]?.compare_at_price > (leftProduct.variants?.[0]?.selling_price || 0) && (
+                                  <span className="text-xs text-neutral-400 line-through font-mono">
+                                     ₹{leftProduct.variants[0].compare_at_price.toLocaleString('en-IN')}
+                                  </span>
+                               )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mt-auto">
+                               <button
+                                  onClick={(e) => handleAddProductToCart(leftProduct, e)}
+                                  className="w-full bg-neutral-900 hover:bg-black text-white text-[9px] font-bold uppercase tracking-wider py-2.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1"
+                               >
+                                  <ShoppingBag size={12} />
+                                  Add
+                               </button>
+                               <button
+                                  onClick={(e) => handleBuyNowProduct(leftProduct, e)}
+                                  className="w-full bg-accent hover:bg-amber-600 text-white text-[9px] font-bold uppercase tracking-wider py-2.5 px-2 rounded-lg transition-colors text-center"
+                               >
+                                  Buy Now
+                               </button>
+                            </div>
+                         </div>
+                      )}
+
+                      {/* Central Flash Offer Banner Slider */}
+                      <div className="col-span-12 xl:col-span-6 relative aspect-[16/9] sm:aspect-[2.2/1] md:aspect-[2.5/1] xl:aspect-[1.9/1] max-h-[460px] rounded-2xl overflow-hidden shadow-xl border border-neutral-200/90 group bg-neutral-900">
+                         {homepageOffers.map((promo: any, idx: number) => (
+                            <div 
+                               key={promo.id || idx}
+                               onTouchStart={onPromoTouchStart}
+                               onTouchMove={onPromoTouchMove}
+                               onTouchEnd={onPromoTouchEnd}
+                               className={`absolute inset-0 transition-all duration-1000 ease-in-out select-none ${
+                                  idx === currentPromoIdx ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 z-0 pointer-events-none'
+                               }`}
+                            >
+                               <Link href="/offers" className="absolute inset-0 block cursor-pointer">
+                                  <img 
+                                     src={promo.banner_url ? getMediaUrl(promo.banner_url) : 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&q=80&w=1000'} 
+                                     alt={promo.title} 
+                                     className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-[3s]"
+                                  />
+                               </Link>
+
+                               {/* Softened Background Overlay so Graphic Badges (45%, 55%, 60%) & Perfume Artwork remain 100% visible */}
+                               <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
+
+                               {/* Ultra-Sleek Bottom Floating Pill Bar */}
+                               <div className="absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 sm:gap-3 bg-black/85 backdrop-blur-md px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/15 shadow-2xl max-w-[92%] sm:max-w-none">
+                                  <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-amber-400 uppercase flex-shrink-0">
+                                     {promo.discount_type}
+                                  </span>
+                                  <span className="w-[1px] h-3.5 bg-white/20 flex-shrink-0" />
+                                  <span className="text-[10px] sm:text-[11px] font-semibold text-white truncate max-w-[140px] sm:max-w-[220px] tracking-wide">
+                                     {promo.title}
+                                  </span>
+                                  <Link 
+                                     href="/offers" 
+                                     className="ml-1 bg-white hover:bg-amber-400 text-black px-3 sm:px-4 py-1 text-[8px] sm:text-[9px] font-bold tracking-widest uppercase rounded-full transition-all duration-300 flex-shrink-0 shadow-md"
+                                  >
+                                     Claim Offer
+                                  </Link>
+                               </div>
+                            </div>
+                         ))}
+
+                         {/* Side Arrows on Banner */}
+                         <button 
+                            onClick={() => setCurrentPromoIdx(p => (p === 0 ? homepageOffers.length - 1 : p - 1))}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-black/40 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 border border-white/10 opacity-80 hover:opacity-100"
+                         >
+                            <ChevronLeft size={18} />
+                         </button>
+                         <button 
+                            onClick={() => setCurrentPromoIdx(p => (p === homepageOffers.length - 1 ? 0 : p + 1))}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-black/40 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 border border-white/10 opacity-80 hover:opacity-100"
+                         >
+                            <ChevronRight size={18} />
+                         </button>
+
+                         {/* Bottom Navigation Dots Indicator */}
+                         <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                            <span className="text-[9px] font-bold text-white font-mono">
+                               0{currentPromoIdx + 1} / 0{homepageOffers.length}
+                            </span>
+                         </div>
+                      </div>
+
+                      {/* XL Widescreen Displays: Right Product Card */}
+                      {rightProduct && (
+                         <div className="hidden xl:flex xl:col-span-3 flex-col bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 group">
+                            <div className="relative aspect-square w-full bg-neutral-50 rounded-xl overflow-hidden mb-4 border border-neutral-100">
+                               <span className="absolute top-2.5 left-2.5 z-10 bg-black text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                                  Top Match
+                               </span>
+                               <img 
+                                  src={getMediaUrl(rightProduct.images?.[0] || rightProduct.image)} 
+                                  alt={rightProduct.name} 
+                                  className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                                  onError={(e: any) => { e.target.src = '/placeholder-perfume.png'; }}
+                               />
+                            </div>
+                            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1 truncate">
+                               {rightProduct.brand_name || 'Prestige Selection'}
+                            </span>
+                            <h3 className="text-sm font-semibold text-neutral-900 uppercase truncate mb-2 group-hover:text-accent transition-colors">
+                               {rightProduct.name}
+                            </h3>
+                            <div className="flex items-center gap-2 mb-4">
+                               <span className="text-sm font-bold font-mono text-black">
+                                  ₹{(rightProduct.variants?.[0]?.selling_price || rightProduct.selling_price || 0).toLocaleString('en-IN')}
+                               </span>
+                               {rightProduct.variants?.[0]?.compare_at_price > (rightProduct.variants?.[0]?.selling_price || 0) && (
+                                  <span className="text-xs text-neutral-400 line-through font-mono">
+                                     ₹{rightProduct.variants[0].compare_at_price.toLocaleString('en-IN')}
+                                  </span>
+                               )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mt-auto">
+                               <button
+                                  onClick={(e) => handleAddProductToCart(rightProduct, e)}
+                                  className="w-full bg-neutral-900 hover:bg-black text-white text-[9px] font-bold uppercase tracking-wider py-2.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1"
+                               >
+                                  <ShoppingBag size={12} />
+                                  Add
+                               </button>
+                               <button
+                                  onClick={(e) => handleBuyNowProduct(rightProduct, e)}
+                                  className="w-full bg-accent hover:bg-amber-600 text-white text-[9px] font-bold uppercase tracking-wider py-2.5 px-2 rounded-lg transition-colors text-center"
+                               >
+                                  Buy Now
+                               </button>
+                            </div>
+                         </div>
+                      )}
+
+                   </div>
                 </div>
-
-               {/* Navigation Controls & Counter */}
-               <div className="absolute bottom-6 left-6 lg:left-12 flex items-center gap-6 sm:gap-12 z-20 font-sans">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                     {homepageOffers.map((_: any, idx: number) => (
-                        <button 
-                           key={idx}
-                           onClick={() => setCurrentPromoIdx(idx)}
-                           className={`h-0.5 transition-all duration-1000 ${idx === currentPromoIdx ? 'w-12 sm:w-20 bg-accent' : 'w-6 sm:w-8 bg-white/20'}`}
-                        />
-                     ))}
-                  </div>
-                  <span className="text-[10px] sm:text-[12px] font-black tracking-[0.5em] text-white/60">
-                     <span className="text-white">0{currentPromoIdx + 1}</span> / 0{homepageOffers.length}
-                  </span>
-               </div>
-
-               <div className="absolute bottom-6 right-6 lg:right-12 flex gap-2 sm:gap-4 z-20">
-                  <button 
-                     onClick={() => setCurrentPromoIdx(p => (p === 0 ? homepageOffers.length - 1 : p - 1))}
-                     className="w-10 h-10 sm:w-12 sm:h-12 border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all duration-700 backdrop-blur-xl"
-                  >
-                     <ChevronLeft className="w-5 h-5 sm:w-7 sm:h-7" strokeWidth={1} />
-                  </button>
-                  <button 
-                     onClick={() => setCurrentPromoIdx(p => (p === homepageOffers.length - 1 ? 0 : p + 1))}
-                     className="w-10 h-10 sm:w-12 sm:h-12 border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all duration-700 backdrop-blur-xl"
-                  >
-                     <ChevronRight className="w-5 h-5 sm:w-7 sm:h-7" strokeWidth={1} />
-                  </button>
-               </div>
-            </section>
-         )}
+             </section>
+             );
+          })()}
 
          {/* New Arrivals Grid */}
          <section className="pt-24 pb-12 md:pt-32 md:pb-16 bg-white">

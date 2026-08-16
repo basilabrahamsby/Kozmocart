@@ -85,6 +85,24 @@ const Navbar = () => {
 
   return (
     <header className="w-full relative z-50">
+      {/* 1. Solid Top Announcement Bar ABOVE Navbar Header */}
+      <div className="bg-neutral-950 text-white text-[8px] sm:text-[9px] h-8 flex items-center justify-between px-4 sm:px-8 font-black tracking-[0.2em] uppercase w-full relative z-50">
+        <div className="hidden md:flex items-center space-x-6">
+          <Link href="/track-order" className="hover:text-accent transition-colors">Track Order</Link>
+          <Link href="/rewards" className="hover:text-accent transition-colors">Rewards Program</Link>
+        </div>
+        <div className="flex items-center justify-center mx-auto md:mx-0">
+          <span className="truncate sm:hidden">🚚 Free Shipping over ₹{freeShippingLimit} | Code: <span className="text-accent font-mono">KOZMO999</span></span>
+          <span className="hidden sm:inline">🚚 FREE SHIPPING ON ORDERS OVER ₹{freeShippingLimit.toLocaleString()}/- &nbsp;|&nbsp; USE CODE: <span className="text-accent font-mono ml-1">KOZMO999</span></span>
+        </div>
+        <div className="hidden md:flex items-center gap-3 text-white/70">
+          <a href="#" aria-label="Facebook" className="hover:text-white transition-opacity"><SocialFB /></a>
+          <a href="#" aria-label="Instagram" className="hover:text-white transition-opacity"><SocialIG /></a>
+          <a href="#" aria-label="X (Twitter)" className="hover:text-white transition-opacity"><SocialX /></a>
+          <a href="#" aria-label="LinkedIn" className="hover:text-white transition-opacity"><SocialIN /></a>
+        </div>
+      </div>
+
       {/* Sticky Navbar Container (Main Header Area Only) */}
       <div 
         className={`
@@ -245,37 +263,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Announcement Bar & Utilities Bar Overlay */}
-      {!(isHome && scrolled) && (
-        <div 
-          className={`
-            ${isHome ? 'absolute left-0 right-0 bg-transparent text-white' : 'relative bg-white text-black border-b border-gray-100'} 
-            z-30 w-full flex flex-col
-          `}
-        >
-          {/* Announcement Bar */}
-          <div className={`text-[8px] sm:text-[9px] h-8 flex items-center justify-center font-black tracking-[0.2em] sm:tracking-[0.25em] uppercase gap-2 sm:gap-3 px-4 ${isHome ? 'bg-black/20 backdrop-blur-sm text-white' : 'bg-neutral-950 text-white'}`}>
-            <span className="w-8 h-[1px] bg-current opacity-40 hidden md:block" />
-            <span className="truncate sm:hidden">🚚 Free Shipping over ₹{freeShippingLimit} | Code: <span className="text-accent font-mono">KOZMO999</span></span>
-            <span className="hidden sm:inline">🚚 FREE SHIPPING ON ORDERS OVER ₹{freeShippingLimit.toLocaleString()}/- &nbsp;|&nbsp; USE CODE: <span className="text-accent font-mono ml-1">KOZMO999</span></span>
-            <span className="w-8 h-[1px] bg-current opacity-40 hidden md:block" />
-          </div>
 
-          {/* Top Utilities Bar */}
-          <div className={`max-w-[1400px] mx-auto px-6 lg:px-12 hidden md:flex justify-between items-center h-10 w-full text-[9px] font-black tracking-widest uppercase ${isHome ? 'border-t border-white/10' : 'border-t border-neutral-100'}`}>
-            <div className="flex space-x-6">
-               <Link href="/track-order" className="hover:opacity-70 transition-opacity">Track Your Order</Link>
-               <Link href="/rewards" className="hover:opacity-70 transition-opacity">Rewards Program</Link>
-            </div>
-            <div className={`flex items-center gap-2.5 ${isHome ? 'text-white/70' : 'text-neutral-400'}`}>
-               <a href="#" aria-label="Facebook" className="hover:opacity-100 transition-opacity"><SocialFB /></a>
-               <a href="#" aria-label="Instagram" className="hover:opacity-100 transition-opacity"><SocialIG /></a>
-               <a href="#" aria-label="X (Twitter)" className="hover:opacity-100 transition-opacity"><SocialX /></a>
-               <a href="#" aria-label="LinkedIn" className="hover:opacity-100 transition-opacity"><SocialIN /></a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Overlay Full Screen Search Bar */}
       {isSearchOpen && (
