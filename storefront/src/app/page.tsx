@@ -556,8 +556,19 @@ export default function Home() {
           </section>
 
           {/* High-Converting Flash Offers & Dynamic Product Layout */}
-          {homepageOffers.length > 0 && (() => {
-             const activePromo = homepageOffers[currentPromoIdx] || homepageOffers[0];
+          {(() => {
+             // Fallback default offer if homepageOffers is empty
+             const offersToDisplay = homepageOffers.length > 0 ? homepageOffers : [
+                {
+                   id: 'default-offer-1',
+                   title: 'PREMIUM FRAGRANCE CURATION',
+                   subtitle: 'Experience masterfully curated niche fragrances selected by fragrance experts.',
+                   discount_type: 'SPECIAL OFFER',
+                   banner_url: '/model-banner-1.png',
+                   products: bestsellers
+                }
+             ];
+             const activePromo = offersToDisplay[currentPromoIdx] || offersToDisplay[0];
              
              // Dynamic side product card resolution
              const availableProds = (activePromo?.products?.length > 0) ? activePromo.products : (bestsellers.length > 0 ? bestsellers : newArrivals);
@@ -577,7 +588,7 @@ export default function Home() {
                          </h2>
                       </div>
                       <Link href="/offers" className="group flex items-center gap-2 text-[10px] font-bold tracking-widest text-black uppercase hover:text-accent transition-colors font-sans">
-                         <span>View All Offers ({homepageOffers.length})</span>
+                         <span>View All Offers ({offersToDisplay.length})</span>
                          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform text-accent" />
                       </Link>
                    </div>
@@ -635,7 +646,7 @@ export default function Home() {
 
                       {/* Central Flash Offer Banner Slider */}
                       <div className="col-span-12 xl:col-span-6 relative aspect-[16/9] sm:aspect-[2.2/1] md:aspect-[2.5/1] xl:aspect-[1.9/1] max-h-[460px] rounded-2xl overflow-hidden shadow-xl border border-neutral-200/90 group bg-neutral-900">
-                         {homepageOffers.map((promo: any, idx: number) => (
+                         {offersToDisplay.map((promo: any, idx: number) => (
                             <div 
                                key={promo.id || idx}
                                onTouchStart={onPromoTouchStart}
@@ -653,13 +664,13 @@ export default function Home() {
                                   />
                                </Link>
 
-                               {/* Softened Background Overlay so Graphic Badges (45%, 55%, 60%) & Perfume Artwork remain 100% visible */}
+                               {/* Softened Background Overlay */}
                                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
 
                                {/* Ultra-Sleek Bottom Floating Pill Bar */}
                                <div className="absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 sm:gap-3 bg-black/85 backdrop-blur-md px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/15 shadow-2xl max-w-[92%] sm:max-w-none">
                                   <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-amber-400 uppercase flex-shrink-0">
-                                     {promo.discount_type}
+                                     {promo.discount_type || 'SPECIAL OFFER'}
                                   </span>
                                   <span className="w-[1px] h-3.5 bg-white/20 flex-shrink-0" />
                                   <span className="text-[10px] sm:text-[11px] font-semibold text-white truncate max-w-[140px] sm:max-w-[220px] tracking-wide">
@@ -677,13 +688,13 @@ export default function Home() {
 
                          {/* Side Arrows on Banner */}
                          <button 
-                            onClick={() => setCurrentPromoIdx(p => (p === 0 ? homepageOffers.length - 1 : p - 1))}
+                            onClick={() => setCurrentPromoIdx(p => (p === 0 ? offersToDisplay.length - 1 : p - 1))}
                             className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-black/40 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 border border-white/10 opacity-80 hover:opacity-100"
                          >
                             <ChevronLeft size={18} />
                          </button>
                          <button 
-                            onClick={() => setCurrentPromoIdx(p => (p === homepageOffers.length - 1 ? 0 : p + 1))}
+                            onClick={() => setCurrentPromoIdx(p => (p === offersToDisplay.length - 1 ? 0 : p + 1))}
                             className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 bg-black/40 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 border border-white/10 opacity-80 hover:opacity-100"
                          >
                             <ChevronRight size={18} />
@@ -692,7 +703,7 @@ export default function Home() {
                          {/* Bottom Navigation Dots Indicator */}
                          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                             <span className="text-[9px] font-bold text-white font-mono">
-                               0{currentPromoIdx + 1} / 0{homepageOffers.length}
+                               0{currentPromoIdx + 1} / 0{offersToDisplay.length}
                             </span>
                          </div>
                       </div>
