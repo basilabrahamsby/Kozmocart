@@ -555,19 +555,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* High-Converting Flash Offers & Dynamic Product Layout */}
-          {(() => {
-             // Fallback default offer if homepageOffers is empty
-             const offersToDisplay = homepageOffers.length > 0 ? homepageOffers : [
-                {
-                   id: 'default-offer-1',
-                   title: 'PREMIUM FRAGRANCE CURATION',
-                   subtitle: 'Experience masterfully curated niche fragrances selected by fragrance experts.',
-                   discount_type: 'SPECIAL OFFER',
-                   banner_url: '/model-banner-1.png',
-                   products: bestsellers
-                }
-             ];
+          {/* High-Converting Flash Offers & Dynamic Product Layout - Only show when valid offer exists */}
+          {homepageOffers.length > 0 && (() => {
+             const offersToDisplay = homepageOffers;
              const activePromo = offersToDisplay[currentPromoIdx] || offersToDisplay[0];
              
              // Dynamic side product card resolution
