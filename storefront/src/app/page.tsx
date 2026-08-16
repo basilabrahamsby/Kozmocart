@@ -419,18 +419,20 @@ export default function Home() {
                );
             })}
 
-            {/* Desktop Side Arrows for Hero Slider */}
+            {/* Prominent High-Contrast Left & Right Transition Arrow Buttons */}
             <button 
                onClick={() => setCurrentSlide(p => (p === 0 ? heroSlidesToUse.length - 1 : p - 1))}
-               className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/30 hover:bg-black/80 text-white rounded-full items-center justify-center backdrop-blur-md transition-all border border-white/10"
+               aria-label="Previous Banner Slide"
+               className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 bg-black/75 hover:bg-accent text-white hover:text-black rounded-full flex items-center justify-center backdrop-blur-xl shadow-2xl transition-all duration-300 border border-white/20 hover:scale-110 active:scale-95 cursor-pointer"
             >
-               <ChevronLeft size={20} />
+               <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
             </button>
             <button 
                onClick={() => setCurrentSlide(p => (p === heroSlidesToUse.length - 1 ? 0 : p + 1))}
-               className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-black/30 hover:bg-black/80 text-white rounded-full items-center justify-center backdrop-blur-md transition-all border border-white/10"
+               aria-label="Next Banner Slide"
+               className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 bg-black/75 hover:bg-accent text-white hover:text-black rounded-full flex items-center justify-center backdrop-blur-xl shadow-2xl transition-all duration-300 border border-white/20 hover:scale-110 active:scale-95 cursor-pointer"
             >
-               <ChevronRight size={20} />
+               <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
             </button>
 
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-3">
