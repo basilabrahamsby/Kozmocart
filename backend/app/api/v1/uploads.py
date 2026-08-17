@@ -34,16 +34,19 @@ async def upload_asset(
         file_content = await file.read()
         img = Image.open(io.BytesIO(file_content))
         
-        # Resize to max 1200px for web optimized layouts
-        max_size = 1200
+        # Support 4K Ultra-HD hero banner uploads up to 3840px with near-lossless max quality (95%)
+        max_size = 3840
         if img.width > max_size or img.height > max_size:
             img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
             
-        fmt = 'JPEG' if ext in ('.jpg', '.jpeg') else 'PNG'
+        fmt = 'JPEG' if ext in ('.jpg', '.jpeg') else ('PNG' if ext == '.png' else 'JPEG')
         if fmt == 'JPEG' and img.mode in ('RGBA', 'P'):
             img = img.convert('RGB')
             
-        img.save(save_to, fmt, quality=75)
+        if fmt == 'PNG':
+            img.save(save_to, fmt, optimize=True)
+        else:
+            img.save(save_to, fmt, quality=95, optimize=True)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process and compress file stream: {str(e)}")
     finally:
