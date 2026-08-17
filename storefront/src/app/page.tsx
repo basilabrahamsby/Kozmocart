@@ -656,7 +656,10 @@ export default function Home() {
                                   <img 
                                      src={promo.banner_url ? getMediaUrl(promo.banner_url) : 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&q=80&w=1000'} 
                                      alt={promo.title} 
-                                     className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-[3s]"
+                                     fetchPriority={idx === 0 ? "high" : "low"}
+                                     loading={idx === 0 ? "eager" : "lazy"}
+                                     decoding="async"
+                                     className="w-full h-full object-contain object-center transform-gpu group-hover:scale-[1.02] transition-transform duration-[3s]"
                                   />
                                </Link>
 
