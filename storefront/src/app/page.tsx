@@ -333,65 +333,69 @@ export default function Home() {
    return (
       <div className="flex flex-col w-full bg-white">
 
-         {/* Main Hero Banner Slider - only shown if CMS hero slides or active offer banners are configured */}
-         {heroSlidesToUse.length > 0 && (
-         <section 
-            onTouchStart={onHeroTouchStart}
-            onTouchMove={onHeroTouchMove}
-            onTouchEnd={onHeroTouchEnd}
-            className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[3.6/1] max-h-[520px] min-h-[320px] bg-neutral-950 overflow-hidden select-none"
-         >
-            {heroSlidesToUse.map((slide: any, idx: number) => {
-               const isPromo = !!slide.discount_type;
-               const slideImage = getMediaUrl(slide.banner_url || slide.image);
-               const slideTitle = slide.title;
-               const slideSubtitle = isPromo ? `${slide.discount_type} • CODE: ${slide.code}` : slide.subtitle;
-               const slideDesc = isPromo ? (slide.subtitle || 'Exclusive fragrance savings & curated collections.') : slide.desc;
-               const slideCta = isPromo ? 'Claim Offer' : (slide.cta || 'Shop Collection');
-               
-               let slideLink = isPromo ? '/offers' : '/shop';
-               if (slide.link_type === 'product' && slide.product_slug) {
-                  slideLink = `/product/${slide.product_slug}`;
-               } else if (slide.link_type === 'product' && slide.product_id) {
-                  slideLink = getProductRedirectUrl(slide.product_id);
-               } else if (slide.link_type === 'offer') {
-                  slideLink = slide.offer_id ? `/offers?id=${slide.offer_id}` : '/offers';
-               } else if (slide.link_type === 'custom' && slide.custom_link) {
-                  slideLink = slide.custom_link;
-               } else {
-                  if (slide.product_slug) {
-                     slideLink = `/product/${slide.product_slug}`;
-                  } else if (slide.product_id) {
-                     slideLink = getProductRedirectUrl(slide.product_id);
-                  } else if (slide.offer_id) {
-                     slideLink = `/offers?id=${slide.offer_id}`;
-                  } else if (slide.custom_link) {
-                     slideLink = slide.custom_link;
-                  }
-               }
-               
-               return (
-                  <div
-                     key={idx}
-                     className={`absolute inset-0 w-full h-full transition-all duration-[1500ms] ease-in-out transform ${idx === currentSlide ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 z-0'
-                        }`}
-                  >
-                     {/* Desktop/Web display */}
-                     <img
-                        src={slideImage}
-                        alt={slideTitle}
-                        fetchPriority={idx === 0 ? "high" : "low"}
-                        className="hidden md:block absolute inset-0 w-full h-full object-cover object-center"
-                     />
-                     {/* Mobile display - fall back to Web image if mobile image is blank */}
-                     <img
-                        src={getMediaUrl(slide.image_mobile || slide.banner_url_mobile || slide.banner_url || slide.image)}
-                        alt={slideTitle}
-                        fetchPriority={idx === 0 ? "high" : "low"}
-                        className="block md:hidden absolute inset-0 w-full h-full object-cover object-center"
-                     />
-                     {/* Softened background gradient overlay so graphics & text inside banners remain crystal-clear */}
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+          {/* Main Hero Banner Slider - Standard HD (1920x530) & 4K (2560x710) [3.6:1] | Mobile (1080x1350) [4:5] */}
+          {heroSlidesToUse.length > 0 && (
+          <section 
+             onTouchStart={onHeroTouchStart}
+             onTouchMove={onHeroTouchMove}
+             onTouchEnd={onHeroTouchEnd}
+             className="relative w-full aspect-[4/5] sm:aspect-[16/9] md:aspect-[3.6/1] h-auto min-h-[380px] sm:h-[420px] md:h-[480px] lg:h-[520px] max-h-[520px] bg-neutral-950 overflow-hidden select-none"
+          >
+             {heroSlidesToUse.map((slide: any, idx: number) => {
+                const isPromo = !!slide.discount_type;
+                const slideImage = getMediaUrl(slide.banner_url || slide.image);
+                const slideTitle = slide.title;
+                const slideSubtitle = isPromo ? `${slide.discount_type} • CODE: ${slide.code}` : slide.subtitle;
+                const slideDesc = isPromo ? (slide.subtitle || 'Exclusive fragrance savings & curated collections.') : slide.desc;
+                const slideCta = isPromo ? 'Claim Offer' : (slide.cta || 'Shop Collection');
+                
+                let slideLink = isPromo ? '/offers' : '/shop';
+                if (slide.link_type === 'product' && slide.product_slug) {
+                   slideLink = `/product/${slide.product_slug}`;
+                } else if (slide.link_type === 'product' && slide.product_id) {
+                   slideLink = getProductRedirectUrl(slide.product_id);
+                } else if (slide.link_type === 'offer') {
+                   slideLink = slide.offer_id ? `/offers?id=${slide.offer_id}` : '/offers';
+                } else if (slide.link_type === 'custom' && slide.custom_link) {
+                   slideLink = slide.custom_link;
+                } else {
+                   if (slide.product_slug) {
+                      slideLink = `/product/${slide.product_slug}`;
+                   } else if (slide.product_id) {
+                      slideLink = getProductRedirectUrl(slide.product_id);
+                   } else if (slide.offer_id) {
+                      slideLink = `/offers?id=${slide.offer_id}`;
+                   } else if (slide.custom_link) {
+                      slideLink = slide.custom_link;
+                   }
+                }
+                
+                return (
+                   <div
+                      key={idx}
+                      className={`absolute inset-0 w-full h-full transition-all duration-[1500ms] ease-in-out transform ${idx === currentSlide ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 z-0'
+                         }`}
+                   >
+                      {/* Desktop/Web display - Crisp 1920x530 HD / 2560x710 4K Ultra-HD (3.6:1) - NO CROP, NO STRETCHING */}
+                      <img
+                         src={slideImage}
+                         alt={slideTitle}
+                         fetchPriority={idx === 0 ? "high" : "low"}
+                         loading={idx === 0 ? "eager" : "lazy"}
+                         decoding="async"
+                         className="hidden md:block absolute inset-0 w-full h-full object-contain object-center transform-gpu"
+                      />
+                      {/* Mobile display - Crisp 1080x1350 (4:5) - NO CROP, NO STRETCHING */}
+                      <img
+                         src={getMediaUrl(slide.image_mobile || slide.banner_url_mobile || slide.banner_url || slide.image)}
+                         alt={slideTitle}
+                         fetchPriority={idx === 0 ? "high" : "low"}
+                         loading={idx === 0 ? "eager" : "lazy"}
+                         decoding="async"
+                         className="block md:hidden absolute inset-0 w-full h-full object-contain object-center transform-gpu"
+                      />
+                      {/* Softened background gradient overlay so graphics & text inside banners remain 100% sharp */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
 
                      <div className="absolute inset-0 flex items-end pb-10 sm:pb-12 md:pb-14">
                         <div className="max-w-[1400px] mx-auto w-full px-6 md:px-20 flex flex-col items-start text-left">
