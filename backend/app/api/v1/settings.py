@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.system import SystemSettings
 from app.schemas.system import GlobalSettingsUpdate
-from app.core.redis import redis_service
+from app.api.v1.storefront.homepage import clear_homepage_cache
 
 router = APIRouter()
 
@@ -51,6 +51,7 @@ async def update_settings(
         await redis_service.redis.delete("storefront:homepage")
     except Exception:
         pass
+    clear_homepage_cache()
     
     # Return fresh state
     result = await db.execute(select(SystemSettings))

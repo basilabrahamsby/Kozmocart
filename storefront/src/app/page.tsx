@@ -111,11 +111,13 @@ export default function Home() {
       });
    };
 
-   const activeSlides = cmsLayout?.hero_slides?.length ? cmsLayout.hero_slides : [];
+   const rawSlides = Array.isArray(cmsLayout?.hero_slides) ? cmsLayout.hero_slides : [];
+   const activeSlides = rawSlides.filter((s: any) => s && (s.image || s.banner_url || s.image_mobile || s.banner_url_mobile || s.title));
    const heroSlidesToUse = activeSlides.length > 0 ? activeSlides : homepageOffers;
 
    useEffect(() => {
       if (heroSlidesToUse.length === 0) return;
+      setCurrentSlide((prev) => (prev >= heroSlidesToUse.length ? 0 : prev));
       const interval = setInterval(() => {
          setCurrentSlide((prev) => (prev + 1) % heroSlidesToUse.length);
       }, 6000);

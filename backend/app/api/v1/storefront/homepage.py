@@ -29,6 +29,11 @@ import time
 _HOMEPAGE_MEM_CACHE = None
 _HOMEPAGE_CACHE_TIME = 0.0
 
+def clear_homepage_cache():
+    global _HOMEPAGE_MEM_CACHE, _HOMEPAGE_CACHE_TIME
+    _HOMEPAGE_MEM_CACHE = None
+    _HOMEPAGE_CACHE_TIME = 0.0
+
 @router.get("")
 async def get_homepage_data(db: AsyncSession = Depends(get_db)):
     """Consolidated endpoint fetching all homepage layouts and product curation data en-masse."""
