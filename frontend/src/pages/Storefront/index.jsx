@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { 
   Monitor, Image as ImageIcon, Upload, Trash2, Plus, Save, Sparkles, 
-  LayoutTemplate, Type, AlignLeft, Link as LinkIcon, ShieldCheck
+  LayoutTemplate, Type, AlignLeft, Link as LinkIcon, ShieldCheck, ArrowUp, ArrowDown
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../services/api'
@@ -127,19 +127,20 @@ export default function StorefrontCMS() {
       const layout = res.data.storefront_layout
       if (layout) {
         if (layout.hero_slides) {
-          setHeroSlides(layout.hero_slides.map(slide => ({
+          setHeroSlides(layout.hero_slides.map((slide, idx) => ({
             image: slide.image || '',
             image_mobile: slide.image_mobile || '',
             title: slide.title || '',
             subtitle: slide.subtitle || '',
             desc: slide.desc || '',
             cta: slide.cta || '',
+            priority: slide.priority !== undefined ? Number(slide.priority) : (idx + 1),
             link_type: slide.link_type || 'default',
             product_id: slide.product_id || '',
             product_slug: slide.product_slug || '',
             offer_id: slide.offer_id || '',
             custom_link: slide.custom_link || ''
-          })))
+          })).sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0)))
         }
         if (layout.split_banners) {
           setSplitBanners({
@@ -231,6 +232,7 @@ export default function StorefrontCMS() {
   }
 
   const addHeroSlide = () => {
+    const maxPriority = heroSlides.reduce((max, s) => Math.max(max, Number(s.priority) || 0), 0)
     setHeroSlides([...heroSlides, { 
       image: '', 
       image_mobile: '', 
@@ -238,6 +240,7 @@ export default function StorefrontCMS() {
       subtitle: '', 
       desc: '', 
       cta: '',
+      priority: maxPriority + 1,
       link_type: 'default',
       product_id: '',
       product_slug: '',
@@ -248,6 +251,26 @@ export default function StorefrontCMS() {
 
   const removeHeroSlide = (index) => {
     setHeroSlides(heroSlides.filter((_, i) => i !== index))
+  }
+
+  const moveHeroSlideUp = (index) => {
+    if (index <= 0) return
+    const newSlides = [...heroSlides]
+    const temp = newSlides[index]
+    newSlides[index] = newSlides[index - 1]
+    newSlides[index - 1] = temp
+    newSlides.forEach((slide, idx) => { slide.priority = idx + 1 })
+    setHeroSlides(newSlides)
+  }
+
+  const moveHeroSlideDown = (index) => {
+    if (index >= heroSlides.length - 1) return
+    const newSlides = [...heroSlides]
+    const temp = newSlides[index]
+    newSlides[index] = newSlides[index + 1]
+    newSlides[index + 1] = temp
+    newSlides.forEach((slide, idx) => { slide.priority = idx + 1 })
+    setHeroSlides(newSlides)
   }
 
   const updateHeroSlide = (index, field, val) => {
@@ -347,9 +370,14 @@ export default function StorefrontCMS() {
   const handleSave = async () => {
     setSaving(true)
     try {
+      const sortedSlides = [...heroSlides].map((slide, idx) => ({
+        ...slide,
+        priority: slide.priority !== undefined ? Number(slide.priority) : (idx + 1)
+      })).sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
+
       const payload = {
         storefront_layout: {
-          hero_slides: heroSlides,
+          hero_slides: sortedSlides,
           split_banners: splitBanners,
           mid_quote: midQuote,
           house_favorites: houseFavorites,
@@ -409,8 +437,86 @@ export default function StorefrontCMS() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
              {heroSlides.map((slide, index) => (
-                <div key={index} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, position: 'relative' }}>
-                   <div className="grid-2" style={{ gap: 24 }}>
+                 <div key={index} style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, position: 'relative' }}>
+                    
+                    {/* Sleek Top Priority Header Bar */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ 
+                             background: 'linear-gradient(135deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.1) 100%)', 
+                             border: '1px solid var(--gold)', 
+                             color: 'var(--gold)', 
+                             fontSize: '0.7rem', 
+                             fontWeight: 800, 
+                             padding: '4px 10px', 
+                             borderRadius: 6, 
+                             letterSpacing: '0.08em', 
+                             textTransform: 'uppercase' 
+                          }}>
+                             PRIORITY #{index + 1} {index === 0 ? '• (FIRST BANNER)' : index === 1 ? '• (SECOND BANNER)' : ''}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                             Display sequence on storefront slider
+                          </span>
+                       </div>
+
+                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <button 
+                             onClick={() => moveHeroSlideUp(index)} 
+                             disabled={index === 0} 
+                             className="btn btn-outline btn-xs"
+                             style={{ 
+                                opacity: index === 0 ? 0.35 : 1, 
+                                cursor: index === 0 ? 'not-allowed' : 'pointer', 
+                                gap: 4, 
+                                fontSize: '0.7rem', 
+                                padding: '4px 10px',
+                                color: '#fff',
+                                borderColor: 'rgba(255,255,255,0.15)'
+                             }} 
+                             title="Move Slide Up"
+                          >
+                             <ArrowUp size={12} /> Move Up
+                          </button>
+                          <button 
+                             onClick={() => moveHeroSlideDown(index)} 
+                             disabled={index === heroSlides.length - 1} 
+                             className="btn btn-outline btn-xs"
+                             style={{ 
+                                opacity: index === heroSlides.length - 1 ? 0.35 : 1, 
+                                cursor: index === heroSlides.length - 1 ? 'not-allowed' : 'pointer', 
+                                gap: 4, 
+                                fontSize: '0.7rem', 
+                                padding: '4px 10px',
+                                color: '#fff',
+                                borderColor: 'rgba(255,255,255,0.15)'
+                             }} 
+                             title="Move Slide Down"
+                          >
+                             <ArrowDown size={12} /> Move Down
+                          </button>
+                          {heroSlides.length > 1 && (
+                             <button 
+                                onClick={() => removeHeroSlide(index)} 
+                                className="btn btn-xs"
+                                style={{ 
+                                   background: 'rgba(220,38,38,0.12)', 
+                                   border: '1px solid rgba(220,38,38,0.4)', 
+                                   color: '#ef4444', 
+                                   fontSize: '0.7rem', 
+                                   padding: '4px 10px',
+                                   gap: 4,
+                                   cursor: 'pointer'
+                                }} 
+                                title="Remove Slide"
+                             >
+                                <Trash2 size={12} /> Remove Slide
+                             </button>
+                          )}
+                       </div>
+                    </div>
+
+                    <div className="grid-2" style={{ gap: 24 }}>
                       {/* Image column */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                          <div>
@@ -535,12 +641,6 @@ export default function StorefrontCMS() {
                           )}
                       </div>
                    </div>
-
-                   {heroSlides.length > 1 && (
-                      <button onClick={() => removeHeroSlide(index)} style={{ position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer' }} title="Deprecate Slide">
-                         <Trash2 size={16} />
-                      </button>
-                   )}
                 </div>
              ))}
           </div>
