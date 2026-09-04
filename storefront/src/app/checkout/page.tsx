@@ -240,6 +240,7 @@ export default function Checkout() {
   }, []);
 
   const [addressForm, setAddressForm] = useState({
+    full_name: '',
     label: 'Delivery Address',
     address_line1: '',
     address_line2: '',
@@ -348,7 +349,9 @@ export default function Checkout() {
 
     try {
       // Determine final delivery address metadata
-      let shippingAddressData = {};
+      let shippingAddressData: any = {};
+      const fallbackName = contactForm.full_name || customer?.full_name || '';
+
       if (selectedAddressId === 'new') {
         // Validate new address
         if (!addressForm.address_line1 || !addressForm.city || !addressForm.pincode) {
@@ -356,17 +359,30 @@ export default function Checkout() {
           setPlacingOrder(false);
           return;
         }
-        shippingAddressData = { ...addressForm };
+        const recipientName = addressForm.full_name.trim() || fallbackName.trim();
+        if (!recipientName) {
+          alert('Please provide a Full Name for the delivery recipient.');
+          setPlacingOrder(false);
+          return;
+        }
+        shippingAddressData = { 
+          ...addressForm,
+          full_name: recipientName,
+          name: recipientName
+        };
       } else {
         const matched = addresses.find((a) => a.id === selectedAddressId);
+        const resolvedName = matched?.full_name || matched?.name || fallbackName;
         shippingAddressData = matched ? {
+          full_name: resolvedName,
+          name: resolvedName,
           label: matched.label,
           address_line1: matched.address_line1,
           address_line2: matched.address_line2,
           city: matched.city,
           state: matched.state,
           pincode: matched.pincode,
-          phone: matched.phone,
+          phone: matched.phone || addressForm.phone || contactForm.phone,
           country: matched.country
         } : {};
       }
@@ -766,6 +782,17 @@ export default function Checkout() {
             {/* NEW ADDRESS DYNAMIC FORM */}
             {selectedAddressId === 'new' && (
               <div className="p-6 bg-neutral-50 border border-neutral-100 space-y-4 animate-in fade-in duration-300">
+                <div>
+                  <label className="block text-[9px] font-black tracking-widest text-neutral-400 uppercase mb-1.5">Recipient Full Name *</label>
+                  <input 
+                    required={selectedAddressId === 'new'}
+                    type="text"
+                    placeholder="Enter recipient's full name"
+                    value={addressForm.full_name}
+                    onChange={(e) => setAddressForm({...addressForm, full_name: e.target.value})}
+                    className="w-full border border-neutral-200 px-4 py-3 text-xs focus:border-black outline-none bg-white text-black font-semibold"
+                  />
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[9px] font-black tracking-widest text-neutral-400 uppercase mb-1.5">Address Line 1</label>

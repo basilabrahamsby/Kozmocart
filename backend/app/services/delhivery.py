@@ -205,6 +205,18 @@ async def create_delhivery_shipment(order_data: Dict[str, Any]) -> Dict[str, Any
 
     # Format address
     sa = order_data.get("shipping_address") or {}
+    recipient_name = (
+        sa.get("full_name") or sa.get("name") or sa.get("customer_name") or
+        order_data.get("customer_name")
+    )
+    if not recipient_name or recipient_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "VALUED CUSTOMER", ""):
+        if order_data.get("customer_email"):
+            local_part = order_data["customer_email"].split("@")[0]
+            clean_part = "".join([c if c.isalpha() else " " for c in local_part]).strip()
+            recipient_name = " ".join(word.capitalize() for word in clean_part.split()) if clean_part else "Customer"
+        else:
+            recipient_name = "Customer"
+
     full_address = f"{sa.get('address_line1', '')} {sa.get('address_line2', '') or ''}, {sa.get('city', '')}, {sa.get('state', '')}"
     pincode = sa.get("pincode", "")
 
@@ -217,9 +229,9 @@ async def create_delhivery_shipment(order_data: Dict[str, Any]) -> Dict[str, Any
     payload = {
         "shipments": [
             {
-                "name": order_data.get("customer_name", "Customer"),
+                "name": recipient_name,
                 "add": full_address,
-                "phone": order_data.get("customer_phone", ""),
+                "phone": order_data.get("customer_phone") or sa.get("phone", ""),
                 "payment_mode": payment_mode,
                 "cod_amount": cod_amount,
                 "order": order_data.get("order_number", ""),
@@ -511,21 +523,24 @@ def generate_delhivery_label_html(order, pkg: Optional[Dict[str, Any]] = None) -
     order_num = pkg.get("oid") if (pkg and pkg.get("oid")) else order.order_number
     
     # Destination fields
-    raw_name = pkg.get("name") if (pkg and pkg.get("name")) else None
-    if not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", ""):
-        raw_name = getattr(order, 'customer_name', None)
-    if not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", ""):
-        if hasattr(order, 'customer') and order.customer and getattr(order.customer, 'full_name', None):
-            raw_name = order.customer.full_name
-            
     shipping_addr_obj = order.shipping_address or {}
-    if (not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "")) and isinstance(shipping_addr_obj, dict):
+    raw_name = pkg.get("name") if (pkg and pkg.get("name")) else None
+    
+    if (not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "VALUED CUSTOMER", "")) and isinstance(shipping_addr_obj, dict):
         raw_name = shipping_addr_obj.get('full_name') or shipping_addr_obj.get('name') or shipping_addr_obj.get('customer_name')
 
-    if (not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "")) and getattr(order, 'customer_email', None):
+    if not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "VALUED CUSTOMER", ""):
+        raw_name = getattr(order, 'customer_name', None)
+
+    if not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "VALUED CUSTOMER", ""):
+        if hasattr(order, 'customer') and order.customer and getattr(order.customer, 'full_name', None):
+            raw_name = order.customer.full_name
+
+    if (not raw_name or raw_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "VALUED CUSTOMER", "")) and getattr(order, 'customer_email', None):
         local_part = order.customer_email.split('@')[0]
         clean_part = ''.join([c if c.isalpha() else ' ' for c in local_part]).strip()
-        raw_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Valued Customer"
+        if clean_part:
+            raw_name = ' '.join(word.capitalize() for word in clean_part.split())
 
     dest_name = (raw_name or "Valued Customer").strip()
     

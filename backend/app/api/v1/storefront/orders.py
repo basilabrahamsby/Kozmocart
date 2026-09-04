@@ -239,14 +239,23 @@ async def storefront_checkout(
     db: AsyncSession = Depends(get_db),
     customer: Customer | None = Depends(get_optional_customer)
 ):
-    addr_phone = (body.shipping_address or {}).get("phone") or (body.billing_address or {}).get("phone")
-    addr_email = (body.shipping_address or {}).get("email") or (body.billing_address or {}).get("email")
-    addr_name = (body.shipping_address or {}).get("name") or (body.billing_address or {}).get("name")
+    sa_dict = body.shipping_address or {}
+    ba_dict = body.billing_address or {}
+    addr_phone = sa_dict.get("phone") or ba_dict.get("phone")
+    addr_email = sa_dict.get("email") or ba_dict.get("email")
+    addr_name = sa_dict.get("full_name") or sa_dict.get("name") or sa_dict.get("customer_name") or ba_dict.get("full_name") or ba_dict.get("name")
 
     c_id = customer.id if customer else None
-    c_name = (customer.full_name if customer else None) or body.customer_name or addr_name or "Customer"
+    cust_profile_name = customer.full_name if (customer and customer.full_name and customer.full_name.strip().upper() not in ("CUSTOMER", "NEW CUSTOMER", "VALUED CUSTOMER")) else None
+    body_name = body.customer_name if (body.customer_name and body.customer_name.strip().upper() not in ("CUSTOMER", "NEW CUSTOMER", "VALUED CUSTOMER")) else None
+    
+    c_name = cust_profile_name or addr_name or body_name or "Customer"
     c_email = (customer.email if customer else None) or body.customer_email or addr_email or "customer@kozmocart.com"
     c_phone = (customer.phone if customer else None) or body.customer_phone or addr_phone or "9876543210"
+
+    if customer and c_name and c_name.strip().upper() not in ("CUSTOMER", "NEW CUSTOMER", "VALUED CUSTOMER", ""):
+        if not customer.full_name or customer.full_name.strip().upper() in ("CUSTOMER", "NEW CUSTOMER", ""):
+            customer.full_name = c_name.strip()
 
     body.customer_id = c_id
     body.customer_name = c_name
@@ -478,14 +487,23 @@ async def create_razorpay_order(
     db: AsyncSession = Depends(get_db),
     customer: Customer | None = Depends(get_optional_customer)
 ):
-    addr_phone = (body.shipping_address or {}).get("phone") or (body.billing_address or {}).get("phone")
-    addr_email = (body.shipping_address or {}).get("email") or (body.billing_address or {}).get("email")
-    addr_name = (body.shipping_address or {}).get("name") or (body.billing_address or {}).get("name")
+    sa_dict = body.shipping_address or {}
+    ba_dict = body.billing_address or {}
+    addr_phone = sa_dict.get("phone") or ba_dict.get("phone")
+    addr_email = sa_dict.get("email") or ba_dict.get("email")
+    addr_name = sa_dict.get("full_name") or sa_dict.get("name") or sa_dict.get("customer_name") or ba_dict.get("full_name") or ba_dict.get("name")
 
     c_id = customer.id if customer else None
-    c_name = (customer.full_name if customer else None) or body.customer_name or addr_name or "Customer"
+    cust_profile_name = customer.full_name if (customer and customer.full_name and customer.full_name.strip().upper() not in ("CUSTOMER", "NEW CUSTOMER", "VALUED CUSTOMER")) else None
+    body_name = body.customer_name if (body.customer_name and body.customer_name.strip().upper() not in ("CUSTOMER", "NEW CUSTOMER", "VALUED CUSTOMER")) else None
+    
+    c_name = cust_profile_name or addr_name or body_name or "Customer"
     c_email = (customer.email if customer else None) or body.customer_email or addr_email or "customer@kozmocart.com"
     c_phone = (customer.phone if customer else None) or body.customer_phone or addr_phone or "9876543210"
+
+    if customer and c_name and c_name.strip().upper() not in ("CUSTOMER", "NEW CUSTOMER", "VALUED CUSTOMER", ""):
+        if not customer.full_name or customer.full_name.strip().upper() in ("CUSTOMER", "NEW CUSTOMER", ""):
+            customer.full_name = c_name.strip()
 
     body.customer_id = c_id
     body.customer_name = c_name
