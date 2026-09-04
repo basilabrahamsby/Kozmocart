@@ -542,7 +542,7 @@ def generate_delhivery_label_html(order, pkg: Optional[Dict[str, Any]] = None) -
         if clean_part:
             raw_name = ' '.join(word.capitalize() for word in clean_part.split())
 
-    dest_name = (raw_name or "Valued Customer").strip()
+    dest_name = (raw_name or "Jilu").strip()
     
     dest_address = pkg.get("address") if (pkg and pkg.get("address")) else (
         shipping_addr_obj.get("address_line1", "") + ", " + 

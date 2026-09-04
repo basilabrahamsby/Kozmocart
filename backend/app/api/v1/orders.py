@@ -770,9 +770,9 @@ def _enrich_order(order: Order) -> OrderOut:
         elif out.customer_email:
             local_part = out.customer_email.split('@')[0]
             clean_part = ''.join([c if c.isalpha() else ' ' for c in local_part]).strip()
-            out.customer_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Valued Customer"
+            out.customer_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Jilu"
         else:
-            out.customer_name = "Valued Customer"
+            out.customer_name = "Jilu"
 
     if order.customer:
         if not out.customer_email:

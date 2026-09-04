@@ -1176,12 +1176,12 @@ def generate_shipping_label_pdf(order, company_details: Optional[Dict[str, Any]]
     if (not raw_cust_name or raw_cust_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "")) and isinstance(sa, dict):
         raw_cust_name = sa.get('full_name') or sa.get('name') or sa.get('customer_name')
 
-    if (not raw_cust_name or raw_cust_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "")) and getattr(order, 'customer_email', None):
+    if (not raw_cust_name or raw_cust_name.strip().upper() in ("NEW CUSTOMER", "CUSTOMER", "VALUED CUSTOMER", "")) and getattr(order, 'customer_email', None):
         local_part = order.customer_email.split('@')[0]
         clean_part = ''.join([c if c.isalpha() else ' ' for c in local_part]).strip()
-        raw_cust_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Valued Customer"
+        raw_cust_name = ' '.join(word.capitalize() for word in clean_part.split()) if clean_part else "Jilu"
 
-    cust_name = (raw_cust_name or "Valued Customer").strip()
+    cust_name = (raw_cust_name or "Jilu").strip()
     
     ship_to_html = f"""<font size=6.5 color="#555">SHIP TO:</font><br/>
     <font size=9><b>{cust_name.upper()}</b></font><br/>
